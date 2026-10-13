@@ -1,0 +1,23 @@
+#!/bin/bash
+# Single-command GUI entry for System Updater: sleep-inhibited terminal + update-all.sh
+# Portable terminal choice: first available wins.
+BIN="$HOME/.local/bin/update-all.sh"
+pick_term() {
+  if command -v ghostty >/dev/null 2>&1; then echo "ghostty -e"; return; fi
+  if command -v konsole >/dev/null 2>&1; then echo "konsole -e"; return; fi
+  if command -v xfce4-terminal >/dev/null 2>&1; then echo "xfce4-terminal -x"; return; fi
+  if command -v gnome-terminal >/dev/null 2>&1; then echo "gnome-terminal --"; return; fi
+  if command -v xterm >/dev/null 2>&1; then echo "xterm -e"; return; fi
+  echo ""
+}
+if [ -t 1 ]; then
+  # already in a terminal: just run it
+  exec systemd-inhibit --what=sleep --why="system update" "$BIN" "$@"
+fi
+TERM_CMD=$(pick_term)
+if [ -z "$TERM_CMD" ]; then
+  echo "No terminal found (ghostty/konsole/xfce4-terminal/gnome-terminal/xterm)." >&2
+  exit 1
+fi
+# shellcheck disable=SC2086
+exec systemd-inhibit --what=sleep --why="system update" $TERM_CMD "$BIN" "$@"

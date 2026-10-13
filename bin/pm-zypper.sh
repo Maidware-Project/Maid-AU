@@ -1,0 +1,70 @@
+#!/bin/bash
+# Backend: openSUSE (zypper). Sourced by update-all.sh — not run directly.
+# Provides: pm_name, pm_check, pm_update. Uses $SUDO, $TMP, log(), UPDATED.
+PM_PROBE="/usr/bin/zypper --version"
+pm_name() { echo "zypper"; }
+
+pm_check() {
+  ZYPPER_N=0; PACKMAN_N=0; SYS_HIT=0
+  if sudo -n /usr/bin/zypper --non-interactive dist-upgrade --dry-run --no-confirm >"$TMP" 2>&1; then
+    if grep -qi "Nothing to do" "$TMP"; then
+      log "check: zypper: nothing to do."
+    else
+      ZYPPER_N=$(grep -oE "[0-9]+ packages are going to be upgraded" "$TMP" | grep -oE "^[0-9]+" | head -n1)
+      ZYPPER_N=${ZYPPER_N:-1}
+      UPDATED=1
+      if grep -qiE "kernel-default|kernel-firmware|systemd|dbus-1|glibc|udev|dracut" "$TMP"; then SYS_HIT=1; fi
+      log "check: zypper: ${ZYPPER_N} package(s) available."
+    fi
+  else
+    cat "$TMP"; log "check: zypper dry-run FAILED"; return 1
+  fi
+
+  if sudo -n /usr/bin/zypper --non-interactive list-updates -r packman >"$TMP" 2>&1; then
+    if grep -qi "No updates found" "$TMP"; then
+      log "check: packman: none."
+    else
+      PACKMAN_N=$(grep -c "^v " "$TMP" || true)
+      PACKMAN_N=${PACKMAN_N:-1}
+      log "check: packman: ${PACKMAN_N} package(s) available."
+    fi
+  else
+    cat "$TMP"; log "check: packman query FAILED"; return 1
+  fi
+  EXTRA_N=$PACKMAN_N
+  return 0
+}
+
+pm_update() {
+  echo "--- zypper refresh ---"
+  if $SUDO /usr/bin/zypper --non-interactive refresh >"$TMP" 2>&1; then
+    cat "$TMP"
+    if grep -qiE "error|failed|warning" "$TMP"; then
+      grep -iE "error|failed|warning" "$TMP" >> "$LOG" || true
+    else
+      log "zypper refresh: ok."
+    fi
+  else
+    cat "$TMP"; log "zypper refresh: FAILED"
+    grep -iE "error|failed|warning" "$TMP" >> "$LOG" || true
+    return 1
+  fi
+
+  echo "--- zypper dup (rpm packages) ---"
+  if $SUDO /usr/bin/zypper --non-interactive dist-upgrade --no-confirm --allow-vendor-change >"$TMP" 2>&1; then
+    cat "$TMP"
+    if ! grep -qi "Nothing to do" "$TMP"; then
+      UPDATED=1
+      if grep -qiE "kernel-default|kernel-firmware|systemd|dbus-1|glibc|udev|dracut" "$TMP"; then IMPORTANT=1; fi
+      grep -E "packages are going to be|package is going to|change vendor|Nothing to do" "$TMP" >> "$LOG" || true
+      grep -iE "^.*(error|failed|warning).*$" "$TMP" >> "$LOG" || true
+    else
+      log "zypper dup: nothing to do."
+    fi
+  else
+    cat "$TMP"; log "zypper dup: FAILED"
+    grep -iE "error|failed|warning" "$TMP" >> "$LOG" || true
+    return 1
+  fi
+  return 0
+}
