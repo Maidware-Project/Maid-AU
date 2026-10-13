@@ -28,6 +28,7 @@ pm_check() {
 
 pm_update() {
   echo "--- dnf upgrade ---"
+  SNAP_PRE_ID=$(snap_pre "dnf")
   if $SUDO /usr/bin/dnf upgrade --refresh -y >"$TMP" 2>&1; then
     cat "$TMP"
     if ! grep -qi "Nothing to do" "$TMP"; then
@@ -42,6 +43,15 @@ pm_update() {
     cat "$TMP"; log "dnf upgrade: FAILED"
     grep -iE "error|failed|warning" "$TMP" >> "$LOG" || true
     return 1
+  fi
+  snap_post "dnf"
+  SNAP_POST_ID=$(snap_last)
+  if [ -n "$SNAP_PRE_ID" ] && [ -n "$SNAP_POST_ID" ] && [ "$SNAP_PRE_ID" != "timeshift" ]; then
+    SNAP_INFO="snapshots #$SNAP_PRE_ID -> #$SNAP_POST_ID (rollback: sudo snapper -c root rollback <pre#>)"
+    log "safety: $SNAP_INFO"
+  elif [ "$SNAP_PRE_ID" = "timeshift" ]; then
+    SNAP_INFO="timeshift snapshot taken (restore: timeshift --restore)"
+    log "safety: $SNAP_INFO"
   fi
   return 0
 }

@@ -60,6 +60,7 @@ set -o pipefail
 FAILED=0
 UPDATED=0
 IMPORTANT=0
+SNAP_INFO=""
 TMP=$(mktemp)
 trap 'rm -f "$TMP"' EXIT
 
@@ -71,6 +72,29 @@ trim_log() {
   fi
 }
 say() { echo "$*"; log "$*"; }
+
+# ---- safety net: snapshots around upgrades (rollback beats fear) ----
+snap_last_q() {
+  # check mode only: never prompts, silent skip without root
+  sudo -n snapper -c root list --columns number 2>/dev/null | tail -n 1 || true
+}
+snap_last() { $SUDO snapper -c root list --columns number 2>/dev/null | tail -n 1 || true; }
+snap_pre() {
+  # $1 label -> snapshot id or "" (snapper preferred, btrfs timeshift fallback)
+  if $SUDO snapper -c root list >/dev/null 2>&1; then
+    $SUDO snapper -c root create --description "maidau-pre: $1" --print-number 2>/dev/null || true
+  elif command -v timeshift >/dev/null 2>&1 && [ "$(findmnt -n -o FSTYPE / 2>/dev/null)" = "btrfs" ]; then
+    $SUDO timeshift --create --comments "maidau-pre: $1" >/dev/null 2>&1 && echo "timeshift" || true
+  fi
+}
+snap_post() {
+  # $1 label
+  if $SUDO snapper -c root list >/dev/null 2>&1; then
+    $SUDO snapper -c root create --description "maidau-post: $1" >/dev/null 2>&1 || true
+  elif command -v timeshift >/dev/null 2>&1 && [ "$(findmnt -n -o FSTYPE / 2>/dev/null)" = "btrfs" ]; then
+    $SUDO timeshift --create --comments "maidau-post: $1" >/dev/null 2>&1 || true
+  fi
+}
 
 # ---- backend select ----
 detect_pm() {
@@ -275,6 +299,7 @@ if [ "${1:-}" = "--check" ]; then
   if out=$(fwupd_check); then FW_N=$out; else CHECK_FAIL=1; log "check: firmware query FAILED"; fi
   if out=$(controllers_hook check); then CTRL_N=$out; else CHECK_FAIL=1; log "check: controllers query FAILED"; fi
   CTRL_N=${CTRL_N:-0}
+  SNAP_NOW=$(snap_last_q); [ -n "$SNAP_NOW" ] && log "check: latest snapshot #$SNAP_NOW (rollback available)."
 
   TOTAL=$((ZYPPER_N + FLAT_N + FW_N + CTRL_N))
   if [ "$CHECK_FAIL" -ne 0 ]; then
@@ -315,6 +340,7 @@ controllers_hook update
 fwupd_update
 
 say "=== done (failed=$FAILED updated=$UPDATED important=$IMPORTANT) ==="
+[ -n "$SNAP_INFO" ] && say "safety: $SNAP_INFO"
 
 REBOOT_NEEDED=0
 if [ "$UPDATED" -eq 1 ]; then
@@ -332,9 +358,9 @@ if [ "$FAILED" -eq 0 ]; then
   if [ "$UPDATED" -eq 0 ]; then
     notify "System up to date" "$(last_info)" normal software-update-available
   elif [ "$REBOOT_NEEDED" -eq 1 ]; then
-    notify "System updated - reboot recommended" "$(last_info). Reboot when ready. Log: $LOG" normal software-update-urgent
+    notify "System updated - reboot recommended" "$(last_info). Reboot when ready. Log: $LOG${SNAP_INFO:+ Snaps: $SNAP_INFO}" normal software-update-urgent
   else
-    notify "System updated" "$(last_info). Flatpak + $PM_LABEL + controllers + firmware done." normal software-update-available
+    notify "System updated" "$(last_info). Flatpak + $PM_LABEL + controllers + firmware done.${SNAP_INFO:+ Snaps: $SNAP_INFO}" normal software-update-available
   fi
 else
   notify "Update finished with errors" "$(last_info). Check $LOG" critical dialog-error

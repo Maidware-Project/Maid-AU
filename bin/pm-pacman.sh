@@ -43,6 +43,7 @@ pm_check() {
 
 pm_update() {
   echo "--- pacman -Syu ---"
+  SNAP_PRE_ID=$(snap_pre "pacman")
   if $SUDO /usr/bin/pacman -Syu --noconfirm >"$TMP" 2>&1; then
     cat "$TMP"
     if grep -qi "there is nothing to do" "$TMP"; then
@@ -67,6 +68,15 @@ pm_update() {
     else
       cat "$TMP"; log "AUR update: FAILED (non-fatal)"
     fi
+  fi
+  snap_post "pacman"
+  SNAP_POST_ID=$(snap_last)
+  if [ -n "$SNAP_PRE_ID" ] && [ -n "$SNAP_POST_ID" ] && [ "$SNAP_PRE_ID" != "timeshift" ]; then
+    SNAP_INFO="snapshots #$SNAP_PRE_ID -> #$SNAP_POST_ID (rollback: sudo snapper -c root rollback <pre#>)"
+    log "safety: $SNAP_INFO"
+  elif [ "$SNAP_PRE_ID" = "timeshift" ]; then
+    SNAP_INFO="timeshift snapshot taken (restore: timeshift --restore)"
+    log "safety: $SNAP_INFO"
   fi
   return 0
 }
