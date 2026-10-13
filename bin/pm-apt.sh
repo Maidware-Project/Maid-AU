@@ -32,6 +32,7 @@ pm_update() {
     return 1
   fi
   echo "--- apt upgrade ---"
+  SNAP_PRE_ID=$(snap_pre "apt")
   if $SUDO /usr/bin/apt-get upgrade -y >"$TMP" 2>&1; then
     cat "$TMP"
     if grep -qi "0 upgraded, 0 newly installed" "$TMP"; then
@@ -46,6 +47,15 @@ pm_update() {
     cat "$TMP"; log "apt upgrade: FAILED"
     grep -iE "error|failed|warning" "$TMP" >> "$LOG" || true
     return 1
+  fi
+  snap_post "apt"
+  SNAP_POST_ID=$(snap_last)
+  if [ -n "$SNAP_PRE_ID" ] && [ -n "$SNAP_POST_ID" ] && [ "$SNAP_PRE_ID" != "timeshift" ]; then
+    SNAP_INFO="snapshots #$SNAP_PRE_ID -> #$SNAP_POST_ID (rollback: sudo snapper -c root rollback <pre#>)"
+    log "safety: $SNAP_INFO"
+  elif [ "$SNAP_PRE_ID" = "timeshift" ]; then
+    SNAP_INFO="timeshift snapshot taken (restore: timeshift --restore)"
+    log "safety: $SNAP_INFO"
   fi
   return 0
 }

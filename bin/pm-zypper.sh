@@ -50,6 +50,16 @@ pm_update() {
     return 1
   fi
 
+  echo "--- bootable snapshots ---"
+  if ! rpm -q grub2-snapper-plugin >/dev/null 2>&1; then
+    echo "installing grub2-snapper-plugin (snapshot boot entries)..."
+    if $SUDO /usr/bin/zypper --non-interactive install -y grub2-snapper-plugin >"$TMP" 2>&1; then
+      log "grub2-snapper-plugin: installed."
+    else
+      log "grub2-snapper-plugin: skipped/failed (non-fatal, snapshots still taken)."
+    fi
+  fi
+  SNAP_PRE_ID=$(snap_last)
   echo "--- zypper dup (rpm packages) ---"
   if $SUDO /usr/bin/zypper --non-interactive dist-upgrade --no-confirm --allow-vendor-change >"$TMP" 2>&1; then
     cat "$TMP"
@@ -65,6 +75,11 @@ pm_update() {
     cat "$TMP"; log "zypper dup: FAILED"
     grep -iE "error|failed|warning" "$TMP" >> "$LOG" || true
     return 1
+  fi
+  SNAP_POST_ID=$(snap_last)
+  if [ -n "$SNAP_PRE_ID" ] && [ -n "$SNAP_POST_ID" ]; then
+    SNAP_INFO="snapshots #$SNAP_PRE_ID -> #$SNAP_POST_ID (rollback: boot one from GRUB, or sudo snapper -c root rollback <pre#>)"
+    log "safety: $SNAP_INFO"
   fi
   return 0
 }

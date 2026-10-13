@@ -46,6 +46,18 @@ Without it, the updater asks for your sudo password in the terminal.
 - `update-all.sh --last` — when the last successful run happened
 - Log: `~/.local/share/update-all.log` (last 300 lines kept)
 
+## safety
+
+never hold packages, always snapshot — that's the whole deal. every run
+takes a pre snapshot and a post snapshot (snapper on btrfs, timeshift
+fallback) and tells you the numbers, so a bad update is a rollback away:
+`sudo snapper -c root rollback <pre#>` (or boot one from GRUB).
+on opensuse the zypper plugin already snapshots every dup, we just report
+the pair + make sure `grub2-snapper-plugin` is there for boot entries.
+`--check` shows your latest snapshot for reassurance. holding kernels
+back is not offered on purpose — stale kernels break out-of-tree modules
+worse than updates do.
+
 ## controllers 
 
 `controllers/` is the opensuse KMP stack (xone/xpadneo/joycond/
