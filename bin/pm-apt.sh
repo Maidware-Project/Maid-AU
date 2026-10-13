@@ -2,7 +2,7 @@
 # Backend: Debian/Ubuntu (apt). Sourced by update-all.sh — not run directly.
 # Provides: pm_name, pm_check, pm_update. Uses $SUDO, $TMP, log(), UPDATED.
 # Covers every configured apt repo (including PPAs) via apt list.
-PM_PROBE="/usr/bin/apt-get --version"
+PM_PROBE="apt-get --version"
 pm_name() { echo "apt"; }
 
 pm_check() {
@@ -23,7 +23,7 @@ pm_check() {
 
 pm_update() {
   echo "--- apt update ---"
-  if $SUDO /usr/bin/apt-get update >"$TMP" 2>&1; then
+  if $SUDO apt-get update >"$TMP" 2>&1; then
     cat "$TMP"
     log "apt update: ok."
   else
@@ -33,13 +33,19 @@ pm_update() {
   fi
   echo "--- apt upgrade ---"
   SNAP_PRE_ID=$(snap_pre "apt")
-  if $SUDO /usr/bin/apt-get upgrade -y >"$TMP" 2>&1; then
+  if [ "$REQUIRE_SNAP" = "1" ] && [ -z "$SNAP_PRE_ID" ]; then
+    echo "ABORT: --require-snapshot and pre-snapshot failed."
+    log "strict abort: no pre-snapshot."
+    exit 2
+  fi
+  if $SUDO apt-get upgrade -y >"$TMP" 2>&1; then
     cat "$TMP"
     if grep -qi "0 upgraded, 0 newly installed" "$TMP"; then
       log "apt upgrade: nothing to do."
     else
       UPDATED=1
       if grep -qiE "linux-image|systemd|dbus|libc6|udev|initramfs" "$TMP"; then IMPORTANT=1; fi
+      if [ -f /var/run/reboot-required ]; then IMPORTANT=1; log "reboot hint: /var/run/reboot-required present."; fi
       grep -iE "upgraded|newly installed" "$TMP" >> "$LOG" || true
       grep -iE "^.*(error|failed|warning).*$" "$TMP" >> "$LOG" || true
     fi

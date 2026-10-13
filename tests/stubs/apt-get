@@ -1,0 +1,7 @@
+#!/bin/bash
+case "$*" in
+  *update*) echo "Hit:1 test repo" ;;
+  *upgrade*) echo "2 upgraded, 0 newly installed,"; echo "Unpacking linux-image-99" ;;
+  *) echo "apt-get-stub: $*" ;;
+esac
+exit 0

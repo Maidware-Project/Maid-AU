@@ -1,0 +1,2 @@
+#!/bin/bash
+echo "$*" >> "${NOTIFY_LOG:-/dev/null}"

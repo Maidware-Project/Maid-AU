@@ -1,0 +1,6 @@
+#!/bin/bash
+case "$*" in
+  *short*sinks*) echo "1 testsink" ;;
+  *info*) echo "Default Sink: testsink" ;;
+esac
+exit 0

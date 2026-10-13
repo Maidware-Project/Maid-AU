@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Backend: openSUSE (zypper). Sourced by update-all.sh — not run directly.
 # Provides: pm_name, pm_check, pm_update. Uses $SUDO, $TMP, log(), UPDATED.
-PM_PROBE="/usr/bin/zypper --version"
+PM_PROBE="zypper --version"
 pm_name() { echo "zypper"; }
 
 pm_check() {
   ZYPPER_N=0; PACKMAN_N=0; SYS_HIT=0
-  if sudo -n /usr/bin/zypper --non-interactive dist-upgrade --dry-run --no-confirm >"$TMP" 2>&1; then
+  if sudo -n zypper --non-interactive dist-upgrade --dry-run --no-confirm >"$TMP" 2>&1; then
     if grep -qi "Nothing to do" "$TMP"; then
       log "check: zypper: nothing to do."
     else
@@ -20,7 +20,7 @@ pm_check() {
     cat "$TMP"; log "check: zypper dry-run FAILED"; return 1
   fi
 
-  if sudo -n /usr/bin/zypper --non-interactive list-updates -r packman >"$TMP" 2>&1; then
+  if sudo -n zypper --non-interactive list-updates -r packman >"$TMP" 2>&1; then
     if grep -qi "No updates found" "$TMP"; then
       log "check: packman: none."
     else
@@ -37,7 +37,7 @@ pm_check() {
 
 pm_update() {
   echo "--- zypper refresh ---"
-  if $SUDO /usr/bin/zypper --non-interactive refresh >"$TMP" 2>&1; then
+  if $SUDO zypper --non-interactive refresh >"$TMP" 2>&1; then
     cat "$TMP"
     if grep -qiE "error|failed|warning" "$TMP"; then
       grep -iE "error|failed|warning" "$TMP" >> "$LOG" || true
@@ -53,7 +53,7 @@ pm_update() {
   echo "--- bootable snapshots ---"
   if ! rpm -q grub2-snapper-plugin >/dev/null 2>&1; then
     echo "installing grub2-snapper-plugin (snapshot boot entries)..."
-    if $SUDO /usr/bin/zypper --non-interactive install -y grub2-snapper-plugin >"$TMP" 2>&1; then
+    if $SUDO zypper --non-interactive install -y grub2-snapper-plugin >"$TMP" 2>&1; then
       log "grub2-snapper-plugin: installed."
     else
       log "grub2-snapper-plugin: skipped/failed (non-fatal, snapshots still taken)."
@@ -61,7 +61,11 @@ pm_update() {
   fi
   SNAP_PRE_ID=$(snap_last)
   echo "--- zypper dup (rpm packages) ---"
-  if $SUDO /usr/bin/zypper --non-interactive dist-upgrade --no-confirm --allow-vendor-change >"$TMP" 2>&1; then
+  # NOTE: --allow-vendor-change is required on Tumbleweed, not a shortcut:
+  # without it dup stalls on vendor flips (Packman codec switches, repo
+  # moves). Scoped to this explicit, user-invoked full upgrade — the
+  # scripts never auto-update in the background.
+  if $SUDO zypper --non-interactive dist-upgrade --no-confirm --allow-vendor-change >"$TMP" 2>&1; then
     cat "$TMP"
     if ! grep -qi "Nothing to do" "$TMP"; then
       UPDATED=1

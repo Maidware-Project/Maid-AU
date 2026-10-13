@@ -2,12 +2,12 @@
 # Backend: Fedora/RHEL (dnf). Sourced by update-all.sh — not run directly.
 # Provides: pm_name, pm_check, pm_update. Uses $SUDO, $TMP, log(), UPDATED.
 # Note: `dnf check-update` exits 100 when updates exist (not a failure).
-PM_PROBE="/usr/bin/dnf --version"
+PM_PROBE="dnf --version"
 pm_name() { echo "dnf"; }
 
 pm_check() {
   ZYPPER_N=0; PACKMAN_N=0; SYS_HIT=0
-  sudo -n /usr/bin/dnf check-update -q >"$TMP" 2>&1; rc=$?
+  sudo -n dnf check-update -q >"$TMP" 2>&1; rc=$?
   if [ "$rc" -eq 0 ]; then
     log "check: dnf: nothing to do."
   elif [ "$rc" -eq 100 ]; then
@@ -29,11 +29,19 @@ pm_check() {
 pm_update() {
   echo "--- dnf upgrade ---"
   SNAP_PRE_ID=$(snap_pre "dnf")
-  if $SUDO /usr/bin/dnf upgrade --refresh -y >"$TMP" 2>&1; then
+  if [ "$REQUIRE_SNAP" = "1" ] && [ -z "$SNAP_PRE_ID" ]; then
+    echo "ABORT: --require-snapshot and pre-snapshot failed."
+    log "strict abort: no pre-snapshot."
+    exit 2
+  fi
+  if $SUDO dnf upgrade --refresh -y >"$TMP" 2>&1; then
     cat "$TMP"
     if ! grep -qi "Nothing to do" "$TMP"; then
       UPDATED=1
       if grep -qiE "kernel-core|kernel-modules|systemd|dbus|glibc|udev|dracut" "$TMP"; then IMPORTANT=1; fi
+      if command -v needs-restarting >/dev/null 2>&1; then
+        if needs-restarting -r >/dev/null 2>&1; then :; else IMPORTANT=1; log "reboot hint: needs-restarting wants a reboot."; fi
+      fi
       grep -iE "Upgraded|Installed|Nothing to do" "$TMP" >> "$LOG" || true
       grep -iE "^.*(error|failed|warning).*$" "$TMP" >> "$LOG" || true
     else

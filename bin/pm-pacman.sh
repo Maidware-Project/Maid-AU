@@ -2,7 +2,7 @@
 # Backend: Arch Linux (pacman). Sourced by update-all.sh — not run directly.
 # Provides: pm_name, pm_check, pm_update. Uses $SUDO, $TMP, log(), UPDATED.
 # AUR helper (yay/paru) used read-only for counting when present.
-PM_PROBE="/usr/bin/pacman --version"
+PM_PROBE="pacman --version"
 pm_name() { echo "pacman"; }
 
 _aur_helper() {
@@ -44,7 +44,12 @@ pm_check() {
 pm_update() {
   echo "--- pacman -Syu ---"
   SNAP_PRE_ID=$(snap_pre "pacman")
-  if $SUDO /usr/bin/pacman -Syu --noconfirm >"$TMP" 2>&1; then
+  if [ "$REQUIRE_SNAP" = "1" ] && [ -z "$SNAP_PRE_ID" ]; then
+    echo "ABORT: --require-snapshot and pre-snapshot failed."
+    log "strict abort: no pre-snapshot."
+    exit 2
+  fi
+  if $SUDO pacman -Syu --noconfirm >"$TMP" 2>&1; then
     cat "$TMP"
     if grep -qi "there is nothing to do" "$TMP"; then
       log "pacman: nothing to do."
@@ -61,14 +66,26 @@ pm_update() {
   fi
   AURH=$(_aur_helper || true)
   if [ -n "$AURH" ]; then
-    echo "--- AUR ($AURH -Sua) ---"
-    if "$AURH" -Sua --noconfirm >"$TMP" 2>&1; then
-      cat "$TMP"
-      log "AUR update attempted (see above)."
+    if [ "${UPDATE_AUR:-0}" = "1" ]; then
+      echo "--- AUR ($AURH -Sua) ---"
+      if "$AURH" -Sua --noconfirm >"$TMP" 2>&1; then
+        cat "$TMP"
+        log "AUR update attempted (see above)."
+      else
+        cat "$TMP"; log "AUR update: FAILED (reported as partial, not fatal)"; AUR_FAILED=1
+      fi
     else
-      cat "$TMP"; log "AUR update: FAILED (non-fatal)"
+      log "AUR: skipped (opt-in: UPDATE_AUR=1 update-all.sh; AUR builds run arbitrary code)."
     fi
   fi
+  for _v in /boot/vmlinuz-*; do
+    [ -e "$_v" ] || continue
+    _vmt=$(stat -c %Y "$_v" 2>/dev/null || echo 0)
+    _bte=$(date -d "$(uptime -s 2>/dev/null)" +%s 2>/dev/null || echo 0)
+    if [ "$_vmt" -gt "$_bte" ] && [ "$_bte" -gt 0 ]; then
+      IMPORTANT=1; log "reboot hint: $_v newer than last boot."
+    fi
+  done
   snap_post "pacman"
   SNAP_POST_ID=$(snap_last)
   if [ -n "$SNAP_PRE_ID" ] && [ -n "$SNAP_POST_ID" ] && [ "$SNAP_PRE_ID" != "timeshift" ]; then

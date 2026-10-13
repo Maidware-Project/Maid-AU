@@ -1,0 +1,4 @@
+#!/bin/bash
+[ "${YAY_FAIL:-0}" = "1" ] && { echo "yay error"; exit 1; }
+case "$*" in *-Qu*) cat "${FIXDIR:-.}/aur-qu.txt";; *-Sua*) echo "AUR up to date";; esac
+exit 0
