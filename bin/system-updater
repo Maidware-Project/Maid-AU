@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Single-command GUI entry for System Updater: sleep-inhibited terminal + update-all.sh
 # Portable terminal choice: first available wins.
 BIN="$HOME/.local/bin/update-all.sh"

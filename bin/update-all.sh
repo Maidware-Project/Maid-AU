@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # One-button system updater: flatpak + native packages + firmware.
 # Backends in pm-*.sh (zypper/dnf/pacman/apt), auto-detected, override with UPDATE_PM.
 LOG="$HOME/.local/share/update-all.log"

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Backend: Debian/Ubuntu (apt). Sourced by update-all.sh — not run directly.
 # Provides: pm_name, pm_check, pm_update. Uses $SUDO, $TMP, log(), UPDATED.
 # Covers every configured apt repo (including PPAs) via apt list.
