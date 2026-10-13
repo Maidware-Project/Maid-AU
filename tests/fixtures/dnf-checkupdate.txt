@@ -1,0 +1,3 @@
+kernel-core.x86_64               6.9.1-1.fc40                       updates
+vim-enhanced.x86_64              9.1-1.fc40                        updates
+ffmpeg.x86_64                    7.1-1.fc40                        rpmfusion-free-updates

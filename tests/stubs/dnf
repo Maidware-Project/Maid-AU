@@ -1,0 +1,7 @@
+#!/bin/bash
+case "$*" in
+  *check-update*) cat "${FIXDIR:-.}/dnf-checkupdate.txt"; exit ${DNF_RC:-100} ;;
+  *upgrade*) echo "Upgraded:"; echo "  kernel-core-99"; echo "  vim-99" ;;
+  *) echo "dnf-stub: $*" ;;
+esac
+exit 0

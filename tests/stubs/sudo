@@ -1,0 +1,3 @@
+#!/bin/bash
+while [ "${1:-}" = "-n" ]; do shift; done
+exec "$@"

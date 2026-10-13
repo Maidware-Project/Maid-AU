@@ -1,0 +1,4 @@
+#!/bin/bash
+# usage: rpm -q <pkg>; present iff listed in RPM_PRESENT
+pkg="${*: -1}"
+case " ${RPM_PRESENT:-} " in *" $pkg "*) exit 0;; *) exit 1;; esac

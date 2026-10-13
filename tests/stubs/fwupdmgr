@@ -1,0 +1,6 @@
+#!/bin/bash
+case "$*" in
+  *check-reboot-needed*) echo "No reboot needed" ;;
+  *) echo "No updatable devices" ;;
+esac
+exit 0

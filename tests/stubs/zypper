@@ -1,0 +1,10 @@
+#!/bin/bash
+case "$*" in
+  *dist-upgrade*--dry-run*) cat "${FIXDIR:-.}/zypper-dryrun.txt" ;;
+  *list-updates*-r*packman*) cat "${FIXDIR:-.}/zypper-packman.txt" ;;
+  *list-updates*) echo "No updates found" ;;
+  *refresh*) echo "All repositories have been refreshed." ;;
+  *dist-upgrade*) echo "2 packages are going to be upgraded:"; echo "  kernel-default-99" ;;
+  *) echo "zypper-stub: $*" ;;
+esac
+exit 0

@@ -6,6 +6,17 @@ LASTFILE="$HOME/.local/share/update-all.last"
 STALE_DAYS=3
 mkdir -p "$(dirname "$LOG")"
 
+# flags: --require-snapshot aborts the system upgrade unless snapshots work.
+# May appear anywhere in argv; the rest keeps positional meaning.
+REQUIRE_SNAP=0
+POSARGS=""
+for _a in "$@"; do
+  if [ "$_a" = "--require-snapshot" ]; then REQUIRE_SNAP=1
+  else POSARGS="$POSARGS$_a "; fi
+done
+# shellcheck disable=SC2086
+set -- $POSARGS
+
 notify() {
   local summary="$1"; local body="${2:-}"; local urgency="${3:-normal}"; local icon="${4:-software-update-available}"
   if command -v notify-send >/dev/null 2>&1; then
@@ -60,13 +71,14 @@ set -o pipefail
 FAILED=0
 UPDATED=0
 IMPORTANT=0
+PARTIAL=0
 SNAP_INFO=""
 TMP=$(mktemp)
 trap 'rm -f "$TMP"' EXIT
 
 log() { echo "$*" >> "$LOG"; }
 trim_log() {
-  local max_lines=300
+  local max_lines=1000
   if [ -f "$LOG" ]; then
     tail -n "$max_lines" "$LOG" > "$LOG.tmp" && mv "$LOG.tmp" "$LOG"
   fi
@@ -94,6 +106,12 @@ snap_post() {
   elif command -v timeshift >/dev/null 2>&1 && [ "$(findmnt -n -o FSTYPE / 2>/dev/null)" = "btrfs" ]; then
     $SUDO timeshift --create --comments "maidau-post: $1" >/dev/null 2>&1 || true
   fi
+}
+snap_has_tools() {
+  # strict-mode preflight: snapshot tooling exists (no snapshot taken)
+  $SUDO snapper -c root list >/dev/null 2>&1 && return 0
+  command -v timeshift >/dev/null 2>&1 && [ "$(findmnt -n -o FSTYPE / 2>/dev/null)" = "btrfs" ] && return 0
+  return 1
 }
 
 # ---- backend select ----
@@ -171,7 +189,7 @@ controllers_hook() {
       fi
     else
       CTRL_N=0
-      if sudo -n /usr/bin/zypper --non-interactive list-updates >"$TMP" 2>&1; then
+      if sudo -n zypper --non-interactive list-updates >"$TMP" 2>&1; then
         if grep -qi "No updates found" "$TMP"; then
           log "check: controllers: none."
         else
@@ -335,7 +353,14 @@ if [ -f "$LASTFILE" ]; then
 fi
 
 flatpak_update
+# strict mode: refuse system upgrades with no snapshot tooling at all
+if [ "$REQUIRE_SNAP" = "1" ] && ! snap_has_tools; then
+  say "ABORT: --require-snapshot but no snapper/timeshift available."
+  notify "Update aborted" "No snapshot tooling for --require-snapshot." critical dialog-error
+  exit 2
+fi
 if pm_update; then :; else FAILED=1; fi
+[ "${AUR_FAILED:-0}" = "1" ] && PARTIAL=1
 controllers_hook update
 fwupd_update
 
@@ -355,7 +380,9 @@ fi
 
 if [ "$FAILED" -eq 0 ]; then
   date +%s > "$LASTFILE"
-  if [ "$UPDATED" -eq 0 ]; then
+  if [ "$PARTIAL" -eq 1 ]; then
+    notify "Update finished partially" "$(last_info). A non-core step failed (see AUR/log). Log: $LOG" normal dialog-warning
+  elif [ "$UPDATED" -eq 0 ]; then
     notify "System up to date" "$(last_info)" normal software-update-available
   elif [ "$REBOOT_NEEDED" -eq 1 ]; then
     notify "System updated - reboot recommended" "$(last_info). Reboot when ready. Log: $LOG${SNAP_INFO:+ Snaps: $SNAP_INFO}" normal software-update-urgent

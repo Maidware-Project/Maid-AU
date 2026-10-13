@@ -34,29 +34,48 @@ bash install.sh            # deps (sudo) + copy + launcher
 bash install.sh --check    # dry run
 ```
 
-existing files are backed up to `*.bak-<timestamp>`. For passwordless
-one-button runs, add a sudoers drop-in (installer prints the exact line
-for your package manager) and validate with `sudo visudo -c`.
-Without it, the updater asks for your sudo password in the terminal.
+existing files are backed up to `*.bak-<timestamp>`. passwordless runs
+are opt-in and risky: a NOPASSWD package manager rule is effectively
+passwordless root for your user (it can install crafted local packages).
+default is asking for sudo, which is fine. to opt in anyway the installer
+prints a safe sequence (write temp file, `visudo -c -f` it first, install
+with mode 0440). no network downloads anywhere in this package — every
+dependency comes from your distro repos.
 
 ## usage
 
 - launcher: **System Updater** (or `system-updater`, `update-all.sh`)
 - `update-all.sh --check` — report only (app vs system/firmware)
 - `update-all.sh --last` — when the last successful run happened
-- Log: `~/.local/share/update-all.log` (last 300 lines kept)
+- `update-all.sh --require-snapshot` — combine with a run: abort the
+  system upgrade unless snapshots actually work (see safety)
+- Log: `~/.local/share/update-all.log` (last 1000 lines kept)
 
 ## safety
 
 never hold packages, always snapshot — that's the whole deal. every run
-takes a pre snapshot and a post snapshot (snapper on btrfs, timeshift
+*attempts* a pre snapshot and a post snapshot (snapper on btrfs, timeshift
 fallback) and tells you the numbers, so a bad update is a rollback away:
 `sudo snapper -c root rollback <pre#>` (or boot one from GRUB).
-on opensuse the zypper plugin already snapshots every dup, we just report
-the pair + make sure `grub2-snapper-plugin` is there for boot entries.
-`--check` shows your latest snapshot for reassurance. holding kernels
-back is not offered on purpose — stale kernels break out-of-tree modules
-worse than updates do.
+honest version: snapshot failure does NOT stop the upgrade by default,
+it gets logged loudly instead — pass `--require-snapshot` to make it
+abort instead. on opensuse the zypper plugin already snapshots every dup,
+we just report the pair + make sure `grub2-snapper-plugin` is there for
+boot entries. `--check` shows your latest snapshot for reassurance.
+holding kernels back is not offered on purpose — stale kernels break
+out-of-tree modules worse than updates do.
+
+## failure policy
+
+- failed system upgrade, refresh, or firmware step → run marked FAILED,
+  error notification, nothing hidden.
+- failed controller update → also FAILED (reported distinctly). a merely
+  unhealthy controller *check* never fails the run, just logs.
+- failed AUR build (opt-in via `UPDATE_AUR=1`) → run marked PARTIAL,
+  not failed: system packages are done, AUR needs a look.
+- reboot hints are hints: name patterns everywhere, plus
+  `/var/run/reboot-required` on apt, `needs-restarting -r` on dnf,
+  staged-kernel-vs-boot comparison on pacman.
 
 ## controllers 
 
@@ -68,13 +87,18 @@ installed only on zypper systems. Elsewhere:
 - **Fedora/Debian**: check community DKMS/COPR builds for your kernel;
   generic Xbox/PlayStation/Switch pads already work with in-kernel
   drivers (`xpad`, `hid-playstation`, `hid-nintendo`).
-the updater logs a pointer and moves on — it never fails the run over this. (usually)
+the updater logs a pointer and moves on. a failing health check never
+fails the run; a failed controller *update* is reported as an error
+(see failure policy).
 
 ## repos
 
-- zypper backend reports **packman** updates separately.
+- zypper backend reports **packman** updates separately. dup runs with
+  `--allow-vendor-change` because Tumbleweed stalls without it (Packman
+  codec flips, repo moves) — scoped to this explicit manual run only.
 - dnf backend counts **RPM Fusion** updates separately.
-- pacman backend counts **AUR** updates when `yay`/`paru` exists.
+- pacman backend counts **AUR** updates when `yay`/`paru` exists; AUR
+  *builds* only run with `UPDATE_AUR=1` (they execute PKGBUILD code).
 - apt backend covers **every configured repo incl. PPAs** via apt.
 
 ## uninstall

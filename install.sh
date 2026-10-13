@@ -6,8 +6,13 @@ set -u
 PKGDIR="$(cd "$(dirname "$0")" && pwd)"
 BACKUP_TS="$(date +%Y%m%d-%H%M%S)"
 CHECK=0; NO_PKGS=0
-[ "${1:-}" = "--check" ] && CHECK=1
-[ "${1:-}" = "--no-packages" ] && NO_PKGS=1
+for a in "$@"; do
+  case "$a" in
+    --check) CHECK=1 ;;
+    --no-packages) NO_PKGS=1 ;;
+    *) echo "unknown option: $a (see: --check --no-packages)" >&2; exit 2 ;;
+  esac
+done
 
 say()  { echo "==> $*"; }
 warn() { echo "!! $*" >&2; }
@@ -50,7 +55,9 @@ elif [ "$NO_PKGS" = "0" ]; then
   if [ "${#REQ[@]}" -gt 0 ]; then
     say "installing: ${REQ[*]}"
     case "$PM" in
-      pacman) sudo pacman -Sy --needed --noconfirm "${REQ[@]}" ;;
+      # NOTE: full -Syu, never -Sy alone — Arch does not support partial
+      # upgrades (refreshed db + old packages breaks).
+      pacman) sudo pacman -Syu --needed --noconfirm "${REQ[@]}" ;;
       apt) sudo apt-get update && sudo apt-get install -y "${REQ[@]}" ;;
       dnf) sudo dnf install -y "${REQ[@]}" ;;
       zypper) sudo zypper --non-interactive install "${REQ[@]}" ;;
@@ -69,7 +76,8 @@ copy_one() {
     say "backed up $dest"
   fi
   if [ "$rewrite" = "1" ]; then
-    sed -e "s|/home/visa|$HOME|g" "$src" > "$dest"
+    # escape & (sed replacement metachar) in $HOME
+    sed -e "s|/home/visa|${HOME//&/\\&}|g" "$src" > "$dest"
   else
     cp -a "$src" "$dest"
   fi
@@ -101,11 +109,17 @@ if [ "$CHECK" = "1" ]; then say "(check only, nothing changed)"; exit 0; fi
 command -v kbuildsycoca6 >/dev/null 2>&1 && kbuildsycoca6 --noincremental >/dev/null 2>&1 || true
 
 say "done. Backups (if any): *.bak-${BACKUP_TS}"
-say "Optional passwordless updates (else you will be asked for sudo password):"
+say "passwordless updates are OPTIONAL and risky: a NOPASSWD package"
+say "manager rule is effectively passwordless root for your user."
+say "default is asking for your sudo password each run. to opt in:"
 case "$PM" in
-  pacman) say '  echo "$USER ALL=(ALL) NOPASSWD: /usr/bin/pacman" | sudo tee /etc/sudoers.d/system-updater' ;;
-  apt) say '  echo "$USER ALL=(ALL) NOPASSWD: /usr/bin/apt-get" | sudo tee /etc/sudoers.d/system-updater' ;;
-  dnf) say '  echo "$USER ALL=(ALL) NOPASSWD: /usr/bin/dnf" | sudo tee /etc/sudoers.d/system-updater' ;;
-  zypper) say '  echo "$USER ALL=(ALL) NOPASSWD: /usr/bin/zypper" | sudo tee /etc/sudoers.d/system-updater' ;;
+  pacman) BIN=/usr/bin/pacman ;;
+  apt) BIN=/usr/bin/apt-get ;;
+  dnf) BIN=/usr/bin/dnf ;;
+  zypper) BIN=/usr/bin/zypper ;;
+  *) BIN="" ;;
 esac
-say "Always validate sudoers edits with: sudo visudo -c"
+if [ -n "$BIN" ]; then
+  say "  echo \"\$USER ALL=(ALL) NOPASSWD: $BIN\" > /tmp/su-updater"
+  say "  sudo visudo -c -q -f /tmp/su-updater && sudo install -m 0440 /tmp/su-updater /etc/sudoers.d/system-updater"
+fi
