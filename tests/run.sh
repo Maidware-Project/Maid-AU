@@ -135,6 +135,36 @@ HOME=/tmp/maidau-t UPDATE_PM=pacman bash "$PKGDIR/bin/update-all.sh" < /dev/null
 grep -q "unchanged, skipped." /tmp/maidau-t/.local/share/update-all.log || fail "second run re-downloaded"
 ok "appimage links idempotent via etag cache"
 
+echo "== maid suite =="
+fresh_home
+export NOTIFY_LOG=/tmp/maidau-t/notify.log
+mkdir -p "/tmp/maidau-t/Documents/GitHub"
+git init -q --bare /tmp/maidau-origin.git
+git clone -q /tmp/maidau-origin.git "/tmp/maidau-t/Documents/GitHub/Maid BT" 2>/dev/null
+git -C "/tmp/maidau-t/Documents/GitHub/Maid BT" config user.email t@t.t
+git -C "/tmp/maidau-t/Documents/GitHub/Maid BT" config user.name t
+echo hi > "/tmp/maidau-t/Documents/GitHub/Maid BT/f"
+git -C "/tmp/maidau-t/Documents/GitHub/Maid BT" add f
+git -C "/tmp/maidau-t/Documents/GitHub/Maid BT" commit -qm one
+git -C "/tmp/maidau-t/Documents/GitHub/Maid BT" push -q origin master 2>/dev/null || git -C "/tmp/maidau-t/Documents/GitHub/Maid BT" push -q origin main 2>/dev/null || true
+echo hi2 > "/tmp/maidau-t/Documents/GitHub/Maid BT/f2"
+git -C "/tmp/maidau-t/Documents/GitHub/Maid BT" add f2
+git -C "/tmp/maidau-t/Documents/GitHub/Maid BT" commit -qm two
+git -C "/tmp/maidau-t/Documents/GitHub/Maid BT" push -q 2>/dev/null || true
+git -C "/tmp/maidau-t/Documents/GitHub/Maid BT" reset -q --hard HEAD~1
+HOME=/tmp/maidau-t UPDATE_PM=pacman bash "$PKGDIR/bin/update-all.sh" --check < /dev/null 2>&1 | grep -q "maid=1" || fail "behind repo not counted"
+grep -q "1 commit(s) behind" /tmp/maidau-t/.local/share/update-all.log || fail "behind not logged"
+ok "maid suite behind-counted in check"
+MAID_SUITE=0 HOME=/tmp/maidau-t UPDATE_PM=pacman bash "$PKGDIR/bin/update-all.sh" --check < /dev/null 2>&1 | grep -q "maid=0" || fail "opt-out count wrong"
+grep -q "skipped (MAID_SUITE=0)" /tmp/maidau-t/.local/share/update-all.log || fail "opt-out not logged"
+ok "maid suite opt-out"
+HOME=/tmp/maidau-t UPDATE_PM=pacman UPDATE_MAID_DEPLOY=1 bash "$PKGDIR/bin/update-all.sh" < /dev/null >/dev/null 2>&1 || fail "deploy run crashed"
+grep -q "Maid BT.*updated (1)" /tmp/maidau-t/.local/share/update-all.log || fail "pull not logged"
+grep -q "Maid BT.*redeployed" /tmp/maidau-t/.local/share/update-all.log || fail "deploy not logged"
+ok "maid suite pull + redeploy with UPDATE_MAID_DEPLOY=1"
+rm -rf /tmp/maidau-origin.git
+rm -rf /tmp/maidau-t
+
 echo "== cleanup =="
 rm -rf /tmp/maidau-t
 ok "cleanup"

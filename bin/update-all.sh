@@ -352,6 +352,92 @@ appimage_links() {
   done < "$conf"
 }
 
+# ---- maid suite: the updater knows about its own family ----
+# Detects Maid checkouts (BT, AU, Maidshare, watcher, nuclear plugin,
+# atrim launcher) and reports/pulls their upstream commits. Opt out with
+# MAID_SUITE=0. Pulls are --ff-only (diverged trees are left alone and
+# reported); deploying still means rerunning each install.sh.
+maid_repos() {
+  local base name
+  for base in "$HOME/Documents/GitHub" "$HOME/GitHub" "$HOME/Projects" \
+             "$HOME/src" "$HOME/code"; do
+    for name in "Maid BT" "Maid AU" Maidshare maid-watcher \
+                nuclear-mini-player atrimclientlinux; do
+      [ -d "$base/$name/.git" ] && echo "$base/$name"
+    done
+  done
+}
+
+maid_behind() {
+  # echo behind-count for one repo (0 when unknown/offline/no upstream)
+  git -C "$1" fetch --quiet 2>/dev/null || { echo 0; return 0; }
+  git -C "$1" rev-list --count 'HEAD..@{u}' 2>/dev/null || echo 0
+}
+
+maidsuite_check() {
+  if [ "${MAID_SUITE:-1}" = "0" ]; then
+    log "check: maid suite: skipped (MAID_SUITE=0)."; echo 0; return 0
+  fi
+  local d n=0 behind
+  while IFS= read -r d; do
+    [ -n "$d" ] || continue
+    behind=$(maid_behind "$d")
+    if [ "${behind:-0}" -gt 0 ] 2>/dev/null; then
+      log "check: maid suite: $(basename "$d"): $behind commit(s) behind."
+      n=$((n + 1))
+    fi
+  done < <(maid_repos)
+  [ "$n" -eq 0 ] && log "check: maid suite: up to date."
+  echo "$n"
+}
+
+maidsuite_update() {
+  echo "--- maid suite (own tools) ---"
+  if [ "${MAID_SUITE:-1}" = "0" ]; then
+    log "maid suite: skipped (MAID_SUITE=0)."; return 0
+  fi
+  local d changed=0 behind
+  while IFS= read -r d; do
+    [ -n "$d" ] || continue
+    behind=$(maid_behind "$d")
+    [ "${behind:-0}" -gt 0 ] 2>/dev/null || continue
+    if git -C "$d" pull --ff-only >/dev/null 2>&1; then
+      log "maid suite: $(basename "$d"): updated ($behind)."
+      changed=1
+      maidsuite_deploy "$d"
+    else
+      log "maid suite: $(basename "$d"): needs attention (diverged?) — left alone."
+      PARTIAL=1
+    fi
+  done < <(maid_repos)
+  [ "$changed" = "1" ] && UPDATED=1
+  return 0
+}
+
+maidsuite_deploy() {
+  # Rerun a project's installer after its code updated. Opt-in via
+  # UPDATE_MAID_DEPLOY=1 (default off: installers enable services).
+  # stdin is /dev/null so interactive prompts skip themselves.
+  local d="$1"
+  [ "${UPDATE_MAID_DEPLOY:-0}" = "1" ] || {
+    log "maid suite: $(basename "$d"): code updated; rerun its install.sh to deploy (or set UPDATE_MAID_DEPLOY=1)."
+    return 0
+  }
+  [ -x "$d/install.sh" ] || {
+    log "maid suite: $(basename "$d"): no installer — deploy manually."
+    return 0
+  }
+  if ( cd "$d" && bash install.sh --no-packages </dev/null >/dev/null 2>&1 ); then
+    log "maid suite: $(basename "$d"): redeployed."
+  elif ( cd "$d" && bash install.sh </dev/null >/dev/null 2>&1 ); then
+    log "maid suite: $(basename "$d"): redeployed."
+  else
+    log "maid suite: $(basename "$d"): redeploy FAILED — run its install.sh by hand."
+    PARTIAL=1
+  fi
+  return 0
+}
+
 fwupd_check() {
   if fwupdmgr get-updates >"$TMP" 2>&1; then
     if grep -qi "No updatable devices" "$TMP"; then
@@ -456,6 +542,7 @@ if [ "${1:-}" = "--check" ]; then
   if [ "$APPIMG_RC" != "0" ]; then CHECK_FAIL=1; log "check: appimage query FAILED"; fi
   if [ "$CTL_UPD" = "1" ]; then UPDATED=1; fi
   CTRL_N=${CTRL_N:-0}; FLAT_N=${FLAT_N:-0}; FW_N=${FW_N:-0}; APPIMG_N=${APPIMG_N:-0}
+  MAID_N=$(maidsuite_check)
   SNAP_NOW=$(snap_last_q); [ -n "$SNAP_NOW" ] && log "check: latest snapshot #$SNAP_NOW (rollback available)."
 
   TOTAL=$((ZYPPER_N + FLAT_N + FW_N + CTRL_N + APPIMG_N))
@@ -471,7 +558,7 @@ if [ "${1:-}" = "--check" ]; then
     notify "App updates available" "$PM_LABEL ${ZYPPER_N} (extra ${EXTRA_N}), flatpak ${FLAT_N}, controllers ${CTRL_N}, appimages ${APPIMG_N}. No reboot needed - run System Updater." normal software-update-available
     echo "App updates available, no reboot needed. $PM_LABEL=${ZYPPER_N} extra=${EXTRA_N} flatpak=${FLAT_N} controllers=${CTRL_N} appimg=${APPIMG_N}"
   fi
-  say "=== check done ($PM_LABEL=$ZYPPER_N extra=$EXTRA_N flatpak=$FLAT_N firmware=$FW_N controllers=$CTRL_N appimg=$APPIMG_N system=$SYS_HIT) ==="
+  say "=== check done ($PM_LABEL=$ZYPPER_N extra=$EXTRA_N flatpak=$FLAT_N firmware=$FW_N controllers=$CTRL_N appimg=$APPIMG_N maid=$MAID_N system=$SYS_HIT) ==="
   if [ -t 1 ]; then
     echo ""; read -n1 -s -r -p "Done - press any key to close..."; echo ""
   fi
@@ -521,6 +608,7 @@ if [ -f "$FLATRF" ]; then . "$FLATRF"; else FAILED=1; log "flatpak: result lost"
 [ "${BG_FAILED:-0}" = "1" ] && FAILED=1
 controllers_hook update
 appimage_update
+maidsuite_update
 fwupd_update
 
 say "=== done (failed=$FAILED updated=$UPDATED important=$IMPORTANT) ==="
