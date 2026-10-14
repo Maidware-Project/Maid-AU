@@ -94,6 +94,13 @@ HOME=/tmp/maidau-t UPDATE_PM=pacman FWUPD_CACHE=/tmp/maidau-t/fwmeta bash "$PKGD
 grep -q "REFRESH-CALLED" /tmp/maidau-t/out2.txt || fail "refresh skipped with stale cache"
 ok "metadata savings (zypper flags + fwupd fresh-skip)"
 
+echo "== background failure propagates =="
+fresh_home
+export NOTIFY_LOG=/tmp/maidau-t/notify.log
+HOME=/tmp/maidau-t UPDATE_PM=pacman FLAT_FAIL=1 bash "$PKGDIR/bin/update-all.sh" < /dev/null >/dev/null 2>&1
+grep -q "finished with errors" /tmp/maidau-t/notify.log || fail "bg flatpak failure hidden"
+ok "background failure propagates"
+
 echo "== cleanup =="
 rm -rf /tmp/maidau-t
 ok "cleanup"

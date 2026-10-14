@@ -311,12 +311,13 @@ if [ "${1:-}" = "--check" ]; then
 
   # all four queries run concurrently; each job owns a private TMP so
   # outputs can't collide. results collected below in fixed order.
-  ( TMP=$(mktemp /tmp/maidau-job.XXXXXX); trap 'rm -f "$TMP"' EXIT;
+  PMF="$TMP.pmf"
+  ( JT=$(mktemp /tmp/maidau-job.XXXXXX); trap 'rm -f "$JT"' EXIT; TMP="$JT";
     ZYPPER_N=0; PACKMAN_N=0; SYS_HIT=0; EXTRA_N=0; UPDATED=0
-    if pm_check >"$TMP.out" 2>&1; then RC=0; else RC=1; fi
+    if pm_check >"$JT.out" 2>&1; then RC=0; else RC=1; fi
     { echo "RC=$RC"; echo "ZYPPER_N=$ZYPPER_N"; echo "PACKMAN_N=$PACKMAN_N";
-      echo "SYS_HIT=$SYS_HIT"; echo "EXTRA_N=$EXTRA_N"; echo "UPDATED=$UPDATED"; } >"$TMP.pm"
-    cat "$TMP.out" ) >"$TMP.pmlog" 2>&1 &
+      echo "SYS_HIT=$SYS_HIT"; echo "EXTRA_N=$EXTRA_N"; echo "UPDATED=$UPDATED"; } >"$PMF"
+    cat "$JT.out" ) >"$TMP.pmlog" 2>&1 &
   PMPID=$!
   ( TMP=$(mktemp /tmp/maidau-job.XXXXXX); trap 'rm -f "$TMP"' EXIT;
     if out=$(flatpak_check); then echo "RC=0 VAL=$out"; else echo "RC=1 VAL=0"; fi ) >"$TMP.flat" 2>&1 &
@@ -330,14 +331,15 @@ if [ "${1:-}" = "--check" ]; then
   CTLPID=$!
   wait "$PMPID"; wait "$FLPID"; wait "$FWDPID"; wait "$CTLPID"
   cat "$TMP.pmlog" "$TMP.flat" "$TMP.fw" "$TMP.ctrl" 2>/dev/null
-  . "$TMP.pmf"
+  if [ -f "$PMF" ]; then . "$PMF"; else CHECK_FAIL=1; log "check: $PM_LABEL query FAILED"; fi
+  if [ "${RC:-}" != "0" ]; then CHECK_FAIL=1; log "check: $PM_LABEL query FAILED"; fi
   FLAT_RC=$(sed -n 's/^RC=\([01]\) VAL=.*/\1/p' "$TMP.flat" | tail -n 1)
-  FLAT_N=$(sed -n 's/^RC=[01] VAL=\(.*\)/\1/p' "$TMP.flat" | tail -n 1)
+  FLAT_N=$(sed -n 's/^RC=[01] VAL=\([^ ]*\).*/\1/p' "$TMP.flat" | tail -n 1)
   FW_RC=$(sed -n 's/^RC=\([01]\) VAL=.*/\1/p' "$TMP.fw" | tail -n 1)
-  FW_N=$(sed -n 's/^RC=[01] VAL=\(.*\)/\1/p' "$TMP.fw" | tail -n 1)
+  FW_N=$(sed -n 's/^RC=[01] VAL=\([^ ]*\).*/\1/p' "$TMP.fw" | tail -n 1)
   CTL_RC=$(sed -n 's/^RC=\([01]\) VAL=.*/\1/p' "$TMP.ctrl" | tail -n 1)
-  CTRL_N=$(sed -n 's/^RC=[01] VAL=\(.*\)/\1/p' "$TMP.ctrl" | tail -n 1)
-  CTL_UPD=$(sed -n 's/^RC=[01] VAL=.* UPDATED=\([01]\)/\1/p' "$TMP.ctrl" | tail -n 1)
+  CTRL_N=$(sed -n 's/^RC=[01] VAL=\([^ ]*\).*/\1/p' "$TMP.ctrl" | tail -n 1)
+  CTL_UPD=$(sed -n 's/^RC=[01] VAL=[^ ]* UPDATED=\([01]\)/\1/p' "$TMP.ctrl" | tail -n 1)
   if [ "$FLAT_RC" != "0" ]; then CHECK_FAIL=1; log "check: flatpak query FAILED"; fi
   if [ "$FW_RC" != "0" ]; then CHECK_FAIL=1; log "check: firmware query FAILED"; fi
   if [ "$CTL_RC" != "0" ]; then CHECK_FAIL=1; log "check: controllers query FAILED"; fi
@@ -378,11 +380,18 @@ if [ -f "$LASTFILE" ]; then
   fi
 fi
 
-flatpak_update
+FLATF="$TMP.flatup"; FLATRF="$TMP.flatres"
+( JT=$(mktemp /tmp/maidau-job.XXXXXX); trap 'rm -f "$JT"' EXIT; TMP="$JT";
+  UPDATED=0; FAILED=0
+  flatpak_update >"$JT.out" 2>&1
+  echo "BG_UPDATED=$UPDATED BG_FAILED=$FAILED" >"$FLATRF"
+  cat "$JT.out" ) >"$FLATF" 2>&1 &
+FLPID=$!
 # strict mode: refuse system upgrades with no snapshot tooling at all
 if [ "$REQUIRE_SNAP" = "1" ] && ! snap_has_tools; then
   say "ABORT: --require-snapshot but no snapper/timeshift available."
   notify "Update aborted" "No snapshot tooling for --require-snapshot." critical dialog-error
+  wait "$FLPID" 2>/dev/null || true
   exit 2
 fi
 # metadata was just refreshed above: later zypper installs in this run
@@ -390,6 +399,11 @@ fi
 export ZYPPER_NO_REFRESH=1
 if pm_update; then :; else FAILED=1; fi
 [ "${AUR_FAILED:-0}" = "1" ] && PARTIAL=1
+wait "$FLPID"
+cat "$FLATF" 2>/dev/null
+if [ -f "$FLATRF" ]; then . "$FLATRF"; else FAILED=1; log "flatpak: result lost"; fi
+[ "${BG_UPDATED:-0}" = "1" ] && UPDATED=1
+[ "${BG_FAILED:-0}" = "1" ] && FAILED=1
 controllers_hook update
 fwupd_update
 
