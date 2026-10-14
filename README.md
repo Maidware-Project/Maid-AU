@@ -27,6 +27,9 @@ backend auto-detected from `/etc/os-release`, override with
 |---|---|---|---|---|
 | flatpak/fwupd/notify | flatpak fwupd libnotify (+pacman-contrib for `checkupdates`) | flatpak fwupd libnotify-bin | flatpak fwupd libnotify | flatpak fwupd libnotify-tools |
 
+no services here — everything runs on demand when you click it, so init
+doesn't matter. fork it for whatever setup you run.
+
 ## installation
 
 ```sh
