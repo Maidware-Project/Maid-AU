@@ -116,7 +116,7 @@ bash install.sh --uninstall --purge    # everything out including those, no ques
 
 MIT — see LICENSE.
 
-## the Maid suite (BT, Maidshare, watcher, nuclear, atrim)
+## the Maid suite (BT, Maidshare, watcher)
 
 Maid AU knows its own family: `--check` reports when your Maid checkouts
 are behind upstream, a full run pulls them `--ff-only`, and
