@@ -122,3 +122,7 @@ Maid AU knows its own family: `--check` reports when your Maid checkouts
 are behind upstream, a full run pulls them `--ff-only`, and
 `UPDATE_MAID_DEPLOY=1` also reruns each project's installer.
 Opt out anytime with `MAID_SUITE=0`.
+
+## Linux Mint
+
+Works like Ubuntu (same `apt` path, including LMDE via Debian). No extra steps.
