@@ -80,6 +80,20 @@ HOME=/tmp/maidau-t UPDATE_PM=pacman bash "$PKGDIR/bin/update-all.sh" < /dev/null
 grep -q "AUR: skipped (opt-in" /tmp/maidau-t/.local/share/update-all.log || fail "AUR default-skip missing"
 ok "AUR opt-in default off"
 
+echo "== metadata savings =="
+grep -q -- "--no-refresh" "$PKGDIR/bin/pm-zypper.sh" || fail "grub install refresh skip"
+grep -q "ZYPPER_NO_REFRESH" "$PKGDIR/controllers/setup-controllers.sh" || fail "controllers refresh skip"
+grep -q "ZYPPER_NO_REFRESH=1" "$PKGDIR/bin/update-all.sh" || fail "no-refresh export"
+mkdir -p /tmp/maidau-t/fwmeta && touch -d "1 hour ago" /tmp/maidau-t/fwmeta/firmware.xml.gz
+export NOTIFY_LOG=/tmp/maidau-t/notify.log
+HOME=/tmp/maidau-t UPDATE_PM=pacman FWUPD_CACHE=/tmp/maidau-t/fwmeta bash "$PKGDIR/bin/update-all.sh" < /dev/null >/tmp/maidau-t/out.txt 2>&1 || fail "update run crashed"
+grep -q "metadata fresh" /tmp/maidau-t/.local/share/update-all.log || fail "fresh metadata not skipped"
+grep -q "REFRESH-CALLED" /tmp/maidau-t/out.txt && fail "refresh ran despite fresh metadata"
+rm -rf /tmp/maidau-t/fwmeta
+HOME=/tmp/maidau-t UPDATE_PM=pacman FWUPD_CACHE=/tmp/maidau-t/fwmeta bash "$PKGDIR/bin/update-all.sh" < /dev/null >/tmp/maidau-t/out2.txt 2>&1 || fail "update run 2 crashed"
+grep -q "REFRESH-CALLED" /tmp/maidau-t/out2.txt || fail "refresh skipped with stale cache"
+ok "metadata savings (zypper flags + fwupd fresh-skip)"
+
 echo "== cleanup =="
 rm -rf /tmp/maidau-t
 ok "cleanup"

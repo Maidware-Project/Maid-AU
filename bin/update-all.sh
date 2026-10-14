@@ -265,7 +265,10 @@ fwupd_check() {
 
 fwupd_update() {
   echo "--- firmware (fwupd) ---"
-  if fwupdmgr refresh >"$TMP" 2>&1; then
+  FWUPD_CACHE="${FWUPD_CACHE:-/var/cache/fwupd}"
+  if [ -n "$(find "$FWUPD_CACHE" -maxdepth 2 -name '*.xml*' -newermt '-24 hours' 2>/dev/null | head -n 1)" ]; then
+    log "fwupd refresh: metadata fresh (<24h), skipping download."
+  elif fwupdmgr refresh >"$TMP" 2>&1; then
     cat "$TMP"
     grep -iE "error|failed|warning" "$TMP" >> "$LOG" || true
   else
@@ -306,17 +309,40 @@ if [ "${1:-}" = "--check" ]; then
   ZYPPER_N=0; PACKMAN_N=0; FLAT_N=0; FW_N=0; SYS_HIT=0
   EXTRA_N=0
 
-  if pm_check; then
-    : # backend set ZYPPER_N/PACKMAN_N/SYS_HIT/EXTRA_N (EXTRA = repo extras)
-  else
-    CHECK_FAIL=1
-    log "check: $PM_LABEL query FAILED"
-  fi
-
-  if out=$(flatpak_check); then FLAT_N=$out; else CHECK_FAIL=1; log "check: flatpak query FAILED"; fi
-  if out=$(fwupd_check); then FW_N=$out; else CHECK_FAIL=1; log "check: firmware query FAILED"; fi
-  if out=$(controllers_hook check); then CTRL_N=$out; else CHECK_FAIL=1; log "check: controllers query FAILED"; fi
-  CTRL_N=${CTRL_N:-0}
+  # all four queries run concurrently; each job owns a private TMP so
+  # outputs can't collide. results collected below in fixed order.
+  ( TMP=$(mktemp /tmp/maidau-job.XXXXXX); trap 'rm -f "$TMP"' EXIT;
+    ZYPPER_N=0; PACKMAN_N=0; SYS_HIT=0; EXTRA_N=0; UPDATED=0
+    if pm_check >"$TMP.out" 2>&1; then RC=0; else RC=1; fi
+    { echo "RC=$RC"; echo "ZYPPER_N=$ZYPPER_N"; echo "PACKMAN_N=$PACKMAN_N";
+      echo "SYS_HIT=$SYS_HIT"; echo "EXTRA_N=$EXTRA_N"; echo "UPDATED=$UPDATED"; } >"$TMP.pm"
+    cat "$TMP.out" ) >"$TMP.pmlog" 2>&1 &
+  PMPID=$!
+  ( TMP=$(mktemp /tmp/maidau-job.XXXXXX); trap 'rm -f "$TMP"' EXIT;
+    if out=$(flatpak_check); then echo "RC=0 VAL=$out"; else echo "RC=1 VAL=0"; fi ) >"$TMP.flat" 2>&1 &
+  FLPID=$!
+  ( TMP=$(mktemp /tmp/maidau-job.XXXXXX); trap 'rm -f "$TMP"' EXIT;
+    if out=$(fwupd_check); then echo "RC=0 VAL=$out"; else echo "RC=1 VAL=0"; fi ) >"$TMP.fw" 2>&1 &
+  FWDPID=$!
+  ( TMP=$(mktemp /tmp/maidau-job.XXXXXX); trap 'rm -f "$TMP"' EXIT;
+    UPDATED=0
+    if out=$(controllers_hook check); then echo "RC=0 VAL=$out UPDATED=$UPDATED"; else echo "RC=1 VAL=0 UPDATED=$UPDATED"; fi ) >"$TMP.ctrl" 2>&1 &
+  CTLPID=$!
+  wait "$PMPID"; wait "$FLPID"; wait "$FWDPID"; wait "$CTLPID"
+  cat "$TMP.pmlog" "$TMP.flat" "$TMP.fw" "$TMP.ctrl" 2>/dev/null
+  . "$TMP.pmf"
+  FLAT_RC=$(sed -n 's/^RC=\([01]\) VAL=.*/\1/p' "$TMP.flat" | tail -n 1)
+  FLAT_N=$(sed -n 's/^RC=[01] VAL=\(.*\)/\1/p' "$TMP.flat" | tail -n 1)
+  FW_RC=$(sed -n 's/^RC=\([01]\) VAL=.*/\1/p' "$TMP.fw" | tail -n 1)
+  FW_N=$(sed -n 's/^RC=[01] VAL=\(.*\)/\1/p' "$TMP.fw" | tail -n 1)
+  CTL_RC=$(sed -n 's/^RC=\([01]\) VAL=.*/\1/p' "$TMP.ctrl" | tail -n 1)
+  CTRL_N=$(sed -n 's/^RC=[01] VAL=\(.*\)/\1/p' "$TMP.ctrl" | tail -n 1)
+  CTL_UPD=$(sed -n 's/^RC=[01] VAL=.* UPDATED=\([01]\)/\1/p' "$TMP.ctrl" | tail -n 1)
+  if [ "$FLAT_RC" != "0" ]; then CHECK_FAIL=1; log "check: flatpak query FAILED"; fi
+  if [ "$FW_RC" != "0" ]; then CHECK_FAIL=1; log "check: firmware query FAILED"; fi
+  if [ "$CTL_RC" != "0" ]; then CHECK_FAIL=1; log "check: controllers query FAILED"; fi
+  if [ "$CTL_UPD" = "1" ]; then UPDATED=1; fi
+  CTRL_N=${CTRL_N:-0}; FLAT_N=${FLAT_N:-0}; FW_N=${FW_N:-0}
   SNAP_NOW=$(snap_last_q); [ -n "$SNAP_NOW" ] && log "check: latest snapshot #$SNAP_NOW (rollback available)."
 
   TOTAL=$((ZYPPER_N + FLAT_N + FW_N + CTRL_N))
@@ -359,6 +385,9 @@ if [ "$REQUIRE_SNAP" = "1" ] && ! snap_has_tools; then
   notify "Update aborted" "No snapshot tooling for --require-snapshot." critical dialog-error
   exit 2
 fi
+# metadata was just refreshed above: later zypper installs in this run
+# skip re-downloading it (setup-controllers honors this env var)
+export ZYPPER_NO_REFRESH=1
 if pm_update; then :; else FAILED=1; fi
 [ "${AUR_FAILED:-0}" = "1" ] && PARTIAL=1
 controllers_hook update

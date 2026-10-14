@@ -1,5 +1,15 @@
 # changelog
 
+## faster runs: stop re-downloading metadata
+
+- zypper backend refreshes once; later installs in the same run pass
+  `--no-refresh` (grub plugin ensure, controller installs via
+  `ZYPPER_NO_REFRESH`). was 3-4 metadata downloads per run.
+- fwupd skips its refresh when metadata is fresher than 24h
+  (override: `FWUPD_CACHE`). still always checks for actual updates.
+- what still takes time is downloads + installs themselves — that part
+  is the distro's work, no script can skip it.
+
 ## snapshot honesty + failure policy
 
 - snapshots are best-effort by default and say so; `--require-snapshot`

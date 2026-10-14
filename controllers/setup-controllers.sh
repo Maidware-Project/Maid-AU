@@ -47,7 +47,7 @@ say "--- controllers (bazzite-equivalent) ---"
 
 # 1. Install / update packages (zypper dup in updater already covers updates,
 #    but explicit install guarantees they stay present after kernel flips)
-if $SUDO /usr/bin/zypper --non-interactive install --no-confirm "${PKGS[@]}" > /tmp/ctrl-install.log 2>&1; then
+if $SUDO zypper --non-interactive install --no-confirm ${ZYPPER_NO_REFRESH:+--no-refresh} "${PKGS[@]}" > /tmp/ctrl-install.log 2>&1; then
   cat /tmp/ctrl-install.log
   if grep -qiE "Nothing to do|already installed|up to date|No updates" /tmp/ctrl-install.log; then
     log "controllers: packages up to date."
@@ -118,7 +118,7 @@ if [ "${XONEDO:-0}" = "1" ]; then
   say "controllers: XONEDO=1 requested, building OpenGamingCollective/xonedo via DKMS..."
   SRC="/usr/src/xonedo-0.1"
   if [ ! -d "$SRC" ]; then
-    $SUDO /usr/bin/zypper --non-interactive install --no-confirm dkms kernel-default-devel curl bsdtar 2>&1 | tail -n 5
+    $SUDO zypper --non-interactive install --no-confirm ${ZYPPER_NO_REFRESH:+--no-refresh} dkms kernel-default-devel curl bsdtar 2>&1 | tail -n 5
     $SUDO /usr/bin/git clone https://github.com/OpenGamingCollective/xonedo.git "$SRC" 2>&1 | tail -n 3
   fi
   ( cd "$SRC" && $SUDO /usr/bin/git pull --ff-only 2>&1 | tail -n 3; $SUDO /usr/sbin/dkms install -m xonedo -v 0.1 --force 2>&1 | tail -n 10 )
