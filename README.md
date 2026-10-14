@@ -47,6 +47,10 @@ dependency comes from your distro repos.
 - launcher: **System Updater** (or `system-updater`, `update-all.sh`)
 - `update-all.sh --check` — report only (app vs system/firmware)
 - `update-all.sh --last` — when the last successful run happened
+- AppImages in `~/AppImages` / `~/Applications` update via embedded
+  info (`appimageupdatetool` when installed); extra direct links go in
+  `~/.config/maidau-appimages.conf` as `Name|URL` lines (downloaded
+  only when changed, old file backed up first)
 - `update-all.sh --require-snapshot` — combine with a run: abort the
   system upgrade unless snapshots actually work (see safety)
 - Log: `~/.local/share/update-all.log` (last 1000 lines kept)

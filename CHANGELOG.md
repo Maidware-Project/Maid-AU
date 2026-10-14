@@ -1,5 +1,13 @@
 # changelog
 
+## appimages
+
+- `~/AppImages` / `~/Applications` `*.AppImage` files update through
+  embedded info when `appimageupdatetool` exists, plus user direct links
+  (`~/.config/maidau-appimages.conf`, `Name|URL` per line) that only
+  download on change (etag cache) with backup-before-replace. failures
+  mark the run partial, never failed.
+
 ## controllers are opt-in
 
 - the Bazzite KMP stack no longer runs by itself: `UPDATE_CONTROLLERS=1`
