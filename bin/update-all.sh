@@ -353,16 +353,17 @@ appimage_links() {
 }
 
 # ---- maid suite: the updater knows about its own family ----
-# Detects Maid checkouts (BT, AU, Maidshare, watcher, nuclear plugin,
-# atrim launcher) and reports/pulls their upstream commits. Opt out with
+# Only Maid-family repos are tracked here: Maid BT, Maidshare and
+# maid-watcher. The Nuclear plugin and the Atrim launcher are separate
+# projects with their own releases - never touch them from here.
+# Opt out with
 # MAID_SUITE=0. Pulls are --ff-only (diverged trees are left alone and
 # reported); deploying still means rerunning each install.sh.
 maid_repos() {
   local base name
   for base in "$HOME/Documents/GitHub" "$HOME/GitHub" "$HOME/Projects" \
              "$HOME/src" "$HOME/code"; do
-    for name in "Maid BT" "Maid AU" Maidshare maid-watcher \
-                nuclear-mini-player atrimclientlinux; do
+    for name in "Maid BT" Maidshare maid-watcher; do
       [ -d "$base/$name/.git" ] && echo "$base/$name"
     done
   done
