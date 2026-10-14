@@ -53,7 +53,7 @@ pm_update() {
   echo "--- bootable snapshots ---"
   if ! rpm -q grub2-snapper-plugin >/dev/null 2>&1; then
     echo "installing grub2-snapper-plugin (snapshot boot entries)..."
-    if $SUDO zypper --non-interactive install -y grub2-snapper-plugin >"$TMP" 2>&1; then
+    if $SUDO zypper --non-interactive install --no-confirm --no-refresh -y grub2-snapper-plugin >"$TMP" 2>&1; then
       log "grub2-snapper-plugin: installed."
     else
       log "grub2-snapper-plugin: skipped/failed (non-fatal, snapshots still taken)."

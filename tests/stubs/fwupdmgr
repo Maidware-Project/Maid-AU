@@ -1,5 +1,6 @@
 #!/bin/bash
 case "$*" in
+  *refresh*) echo "REFRESH-CALLED" ;;
   *check-reboot-needed*) echo "No reboot needed" ;;
   *) echo "No updatable devices" ;;
 esac
