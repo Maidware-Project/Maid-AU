@@ -162,6 +162,13 @@ export SUDO
 
 controllers_hook() {
   # mode: $1 = check|update
+  # Bazzite KMP stack is opt-in (UPDATE_CONTROLLERS=1), announced up front
+  # in update mode so it never surprises anyone mid-run.
+  if [ "${UPDATE_CONTROLLERS:-0}" != "1" ]; then
+    log "controllers: skipped (opt-in: UPDATE_CONTROLLERS=1 update-all.sh)."
+    [ "$1" = "check" ] && echo 0
+    return 0
+  fi
   if [ "$PM" = "zypper" ] && [ -x "$HOME/.local/bin/setup-controllers.sh" ]; then
     if [ "$1" = "update" ]; then
       echo "--- controllers (auto-update) ---"
@@ -380,6 +387,10 @@ if [ -f "$LASTFILE" ]; then
   fi
 fi
 
+# controller drivers are opt-in: say so BEFORE anything changes
+if [ "$PM" = "zypper" ] && [ -x "$HOME/.local/bin/setup-controllers.sh" ] && [ "${UPDATE_CONTROLLERS:-0}" != "1" ]; then
+  say "controllers: skipped (Bazzite KMP stack). to include them: UPDATE_CONTROLLERS=1 update-all.sh"
+fi
 FLATF="$TMP.flatup"; FLATRF="$TMP.flatres"
 ( JT=$(mktemp /tmp/maidau-job.XXXXXX); trap 'rm -f "$JT"' EXIT; TMP="$JT";
   UPDATED=0; FAILED=0

@@ -1,5 +1,12 @@
 # changelog
 
+## controllers are opt-in
+
+- the Bazzite KMP stack no longer runs by itself: `UPDATE_CONTROLLERS=1`
+  to include it, and the updater announces the skip up front before
+  anything changes. don't want controller stuff at all? just never opt
+  in — nothing installs, nothing breaks.
+
 ## faster runs: stop re-downloading metadata
 
 - zypper backend refreshes once; later installs in the same run pass
