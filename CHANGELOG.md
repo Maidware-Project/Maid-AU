@@ -10,10 +10,8 @@
 
 ## controllers are opt-in
 
-- the Bazzite KMP stack no longer runs by itself: `UPDATE_CONTROLLERS=1`
-  to include it, and the updater announces the skip up front before
-  anything changes. don't want controller stuff at all? just never opt
-  in — nothing installs, nothing breaks.
+- Bazzite KMP stack only runs with `UPDATE_CONTROLLERS=1`. don't want
+  it? just never opt in.
 
 ## faster runs: stop re-downloading metadata
 
