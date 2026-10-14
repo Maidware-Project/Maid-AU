@@ -1,21 +1,46 @@
 #!/usr/bin/env bash
 # Universal installer: Arch (pacman), Debian/Ubuntu (apt), Fedora (dnf),
 # openSUSE (zypper). Copies files (no symlinks — survives folder moves).
-# Usage: ./install.sh [--check] [--no-packages]
+# Usage: ./install.sh [--check] [--no-packages] [--uninstall [--purge]]
 set -u
 PKGDIR="$(cd "$(dirname "$0")" && pwd)"
 BACKUP_TS="$(date +%Y%m%d-%H%M%S)"
-CHECK=0; NO_PKGS=0
+CHECK=0; NO_PKGS=0; UNINST=0; PURGE=0
 for a in "$@"; do
   case "$a" in
     --check) CHECK=1 ;;
     --no-packages) NO_PKGS=1 ;;
-    *) echo "unknown option: $a (see: --check --no-packages)" >&2; exit 2 ;;
+    --uninstall) UNINST=1 ;;
+    --purge) PURGE=1 ;;
+    *) echo "unknown option: $a (see: --check --no-packages --uninstall [--purge])" >&2; exit 2 ;;
   esac
 done
 
 say()  { echo "==> $*"; }
 warn() { echo "!! $*" >&2; }
+
+if [ "$UNINST" = "1" ]; then
+  rm -f "$HOME"/.local/bin/update-all.sh "$HOME"/.local/bin/system-updater \
+    "$HOME"/.local/bin/pm-zypper.sh "$HOME"/.local/bin/pm-dnf.sh \
+    "$HOME"/.local/bin/pm-pacman.sh "$HOME"/.local/bin/pm-apt.sh \
+    "$HOME"/.local/bin/setup-controllers.sh "$HOME"/.local/bin/check-controllers.sh
+  rm -f "$HOME"/.local/share/applications/system-updater.desktop
+  if [ "$PURGE" = "1" ]; then
+    rm -f "$HOME"/.config/maidau-appimages.conf "$HOME"/.local/share/update-all.log
+    say "uninstalled, settings and logs removed (--purge)"
+  elif [ -t 0 ]; then
+    printf 'Remove settings and logs too (~/.config/maidau-appimages.conf, update log)? [y/N]: '
+    read -r _ans
+    case "$_ans" in [Yy]*)
+      rm -f "$HOME"/.config/maidau-appimages.conf "$HOME"/.local/share/update-all.log
+      say "uninstalled, settings and logs removed" ;;
+    *) say "uninstalled, settings and logs kept" ;;
+    esac
+  else
+    say "uninstalled (kept: ~/.config/maidau-appimages.conf, update log; rerun with --purge to remove)"
+  fi
+  exit 0
+fi
 
 detect_pm() {
   if [ -f /etc/os-release ]; then
