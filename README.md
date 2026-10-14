@@ -108,8 +108,8 @@ is reported as an error (see failure policy).
 ## uninstall
 
 ```sh
-rm ~/.local/bin/{update-all.sh,system-updater,pm-{zypper,dnf,pacman,apt}.sh,setup-controllers.sh,check-controllers.sh}
-rm ~/.local/share/applications/system-updater.desktop
+bash install.sh --uninstall            # everything out, asks about settings + logs
+bash install.sh --uninstall --purge    # everything out including those, no questions
 ```
 
 ## License
