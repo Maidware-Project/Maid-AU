@@ -81,15 +81,16 @@ out-of-tree modules worse than updates do.
 
 `controllers/` is the opensuse KMP stack (xone/xpadneo/joycond/
 inputplumber/hid-tmff2) — kernel modules packaged per openSUSE kernel,
-installed only on zypper systems. Elsewhere:
+installed only on zypper systems, and only when you opt in:
+`UPDATE_CONTROLLERS=1 update-all.sh`. without it the updater says so
+up front and skips the whole thing. Elsewhere:
 - **Arch**: community DKMS packages (`xone-dkms`, `xpadneo-dkms`) via
   your AUR helper; `joycond`/`inputplumber` from AUR/extra.
 - **Fedora/Debian**: check community DKMS/COPR builds for your kernel;
   generic Xbox/PlayStation/Switch pads already work with in-kernel
   drivers (`xpad`, `hid-playstation`, `hid-nintendo`).
-the updater logs a pointer and moves on. a failing health check never
-fails the run; a failed controller *update* is reported as an error
-(see failure policy).
+a failing health check never fails the run; a failed controller *update*
+is reported as an error (see failure policy).
 
 ## repos
 

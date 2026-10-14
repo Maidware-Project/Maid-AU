@@ -101,6 +101,20 @@ HOME=/tmp/maidau-t UPDATE_PM=pacman FLAT_FAIL=1 bash "$PKGDIR/bin/update-all.sh"
 grep -q "finished with errors" /tmp/maidau-t/notify.log || fail "bg flatpak failure hidden"
 ok "background failure propagates"
 
+echo "== controllers opt-in =="
+fresh_home
+export NOTIFY_LOG=/tmp/maidau-t/notify.log
+mkdir -p /tmp/maidau-t/.local/bin
+printf '#!/bin/bash\necho "Installing xone-kmp-test"\nexit 0\n' > /tmp/maidau-t/.local/bin/setup-controllers.sh
+chmod +x /tmp/maidau-t/.local/bin/setup-controllers.sh
+HOME=/tmp/maidau-t UPDATE_PM=zypper bash "$PKGDIR/bin/update-all.sh" < /dev/null >/dev/null 2>&1 || fail "opt-out run crashed"
+grep -q "controllers: skipped (opt-in" /tmp/maidau-t/.local/share/update-all.log || fail "skip not announced up front"
+grep -q "Installing xone-kmp-test" /tmp/maidau-t/.local/share/update-all.log && fail "controllers ran without opt-in"
+ok "controllers skipped by default"
+HOME=/tmp/maidau-t UPDATE_PM=zypper UPDATE_CONTROLLERS=1 bash "$PKGDIR/bin/update-all.sh" < /dev/null >/dev/null 2>&1 || fail "opt-in run crashed"
+grep -q "Installing xone-kmp-test" /tmp/maidau-t/.local/share/update-all.log || fail "opt-in controllers did not run"
+ok "controllers run when opted in"
+
 echo "== cleanup =="
 rm -rf /tmp/maidau-t
 ok "cleanup"
