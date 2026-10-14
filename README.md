@@ -1,9 +1,8 @@
-# Maid AU — a auto updater for linux
+# Maid AU — one updater for everything on linux
 
-flatpak + native packages + firmware, with notifications, logging,
-tracking, and a --check mode that distinguishes app updates from
-reboot-needed system updates. doesn't reboot for you.
-
+one click updates it all: system packages, flatpak apps, firmware.
+it tells you what changed, warns when a reboot is needed, and never
+reboots for you.
 ## layout
 
 ```
@@ -47,8 +46,10 @@ dependency comes from your distro repos.
 
 ## usage
 
-- launcher: **System Updater** (or `system-updater`, `update-all.sh`)
-- `update-all.sh --check` — report only (app vs system/firmware)
+- launcher: **System Updater** (or run `system-updater` /
+  `update-all.sh` in a terminal)
+- `update-all.sh --check` — dry run: shows what *would* update,
+  split into apps vs system/firmware, changes nothing
 - `update-all.sh --last` — when the last successful run happened
 - AppImages in `~/AppImages` / `~/Applications` update via embedded
   info (`appimageupdatetool` when installed); extra direct links go in
@@ -58,39 +59,35 @@ dependency comes from your distro repos.
   system upgrade unless snapshots actually work (see safety)
 - Log: `~/.local/share/update-all.log` (last 1000 lines kept)
 
-## safety
+## safety (snapshots before everything)
 
-never hold packages, always snapshot — that's the whole deal. every run
-*attempts* a pre snapshot and a post snapshot (snapper on btrfs, timeshift
-fallback) and tells you the numbers, so a bad update is a rollback away:
-`sudo snapper -c root rollback <pre#>` (or boot one from GRUB).
-honest version: snapshot failure does NOT stop the upgrade by default,
-it gets logged loudly instead — pass `--require-snapshot` to make it
-abort instead. on opensuse the zypper plugin already snapshots every dup,
-we just report the pair + make sure `grub2-snapper-plugin` is there for
-boot entries. `--check` shows your latest snapshot for reassurance.
-holding kernels back is not offered on purpose — stale kernels break
-out-of-tree modules worse than updates do.
+every run takes a snapshot before *and* after updating (snapper on
+btrfs, timeshift otherwise) and tells you their numbers. bad update?
+roll back: `sudo snapper -c root rollback <pre#>` (or pick one in GRUB).
 
-## failure policy
+two honest caveats: if snapshotting itself fails, the upgrade still
+goes ahead by default (it gets logged loudly) — pass
+`--require-snapshot` to make it abort instead. and kernels are never
+held back on purpose: an old kernel breaks drivers worse than any
+update does.
 
-- failed system upgrade, refresh, or firmware step → run marked FAILED,
-  error notification, nothing hidden.
-- failed controller update → also FAILED (reported distinctly). a merely
-  unhealthy controller *check* never fails the run, just logs.
-- failed AUR build (opt-in via `UPDATE_AUR=1`) → run marked PARTIAL,
-  not failed: system packages are done, AUR needs a look.
-- reboot hints are hints: name patterns everywhere, plus
-  `/var/run/reboot-required` on apt, `needs-restarting -r` on dnf,
-  staged-kernel-vs-boot comparison on pacman.
+## if something fails
 
-## controllers 
+- a failed system, refresh, or firmware step marks the whole run
+  FAILED and pops an error notification. nothing is hidden.
+- a failed controller *update* also fails the run (said plainly which
+  one). a merely unhealthy controller *check* just gets logged.
+- a failed AUR build (only if you opted in with `UPDATE_AUR=1`) marks
+  the run PARTIAL: system packages are done, one AUR package needs a
+  look — not a failure.
+- "reboot needed" is always just a hint, detected per-distro.
 
-`controllers/` is the opensuse KMP stack (xone/xpadneo/joycond/
-inputplumber/hid-tmff2) — kernel modules packaged per openSUSE kernel,
-installed only on zypper systems, and only when you opt in:
-`UPDATE_CONTROLLERS=1 update-all.sh`. without it the updater says so
-up front and skips the whole thing. Elsewhere:
+## game controllers
+
+`controllers/` handles gamepad drivers (xbox/playstation/switch pads).
+on openSUSE it installs matching kernel modules, but only if you opt
+in: `UPDATE_CONTROLLERS=1 update-all.sh`. without it the updater says
+so up front and skips the whole thing. elsewhere:
 - **Arch**: community DKMS packages (`xone-dkms`, `xpadneo-dkms`) via
   your AUR helper; `joycond`/`inputplumber` from AUR/extra.
 - **Fedora/Debian**: check community DKMS/COPR builds for your kernel;
@@ -99,15 +96,14 @@ up front and skips the whole thing. Elsewhere:
 a failing health check never fails the run; a failed controller *update*
 is reported as an error (see failure policy).
 
-## repos
+## distro extras
 
-- zypper backend reports **packman** updates separately. dup runs with
-  `--allow-vendor-change` because Tumbleweed stalls without it (Packman
-  codec flips, repo moves) — scoped to this explicit manual run only.
-- dnf backend counts **RPM Fusion** updates separately.
-- pacman backend counts **AUR** updates when `yay`/`paru` exists; AUR
-  *builds* only run with `UPDATE_AUR=1` (they execute PKGBUILD code).
-- apt backend covers **every configured repo incl. PPAs** via apt.
+- openSUSE: packman updates are reported separately; upgrades allow
+  vendor change (Tumbleweed stalls without it).
+- Fedora: RPM Fusion updates counted separately.
+- Arch: AUR updates counted when `yay`/`paru` exists; AUR *builds*
+  only run with `UPDATE_AUR=1` (they run other people's build code).
+- Debian/Ubuntu: every configured repo including PPAs is covered.
 
 ## uninstall
 
