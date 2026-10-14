@@ -395,8 +395,10 @@ maidsuite_check() {
 maidsuite_update() {
   echo "--- maid suite (own tools) ---"
   if [ "${MAID_SUITE:-1}" = "0" ]; then
+    say "maid suite: disabled (MAID_SUITE=0) — skipping."
     log "maid suite: skipped (MAID_SUITE=0)."; return 0
   fi
+  say "maid suite: enabled — pulling Maid BT, Maidshare, watcher."
   local d changed=0 behind
   while IFS= read -r d; do
     [ -n "$d" ] || continue
@@ -544,6 +546,13 @@ if [ "${1:-}" = "--check" ]; then
   if [ "$CTL_UPD" = "1" ]; then UPDATED=1; fi
   CTRL_N=${CTRL_N:-0}; FLAT_N=${FLAT_N:-0}; FW_N=${FW_N:-0}; APPIMG_N=${APPIMG_N:-0}
   MAID_N=$(maidsuite_check)
+  if [ "${MAID_SUITE:-1}" = "0" ]; then
+    say "maid suite: disabled (MAID_SUITE=0) — not checked, not updated."
+  elif [ "$MAID_N" -gt 0 ]; then
+    say "maid suite: $MAID_N repo(s) behind — run the updater to pull them."
+  else
+    say "maid suite: up to date."
+  fi
   SNAP_NOW=$(snap_last_q); [ -n "$SNAP_NOW" ] && log "check: latest snapshot #$SNAP_NOW (rollback available)."
 
   TOTAL=$((ZYPPER_N + FLAT_N + FW_N + CTRL_N + APPIMG_N))
