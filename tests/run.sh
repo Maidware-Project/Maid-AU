@@ -143,8 +143,10 @@ git init -q --bare /tmp/maidau-origin.git
 git clone -q /tmp/maidau-origin.git "/tmp/maidau-t/Documents/GitHub/Maid BT" 2>/dev/null
 git -C "/tmp/maidau-t/Documents/GitHub/Maid BT" config user.email t@t.t
 git -C "/tmp/maidau-t/Documents/GitHub/Maid BT" config user.name t
+printf '#!/bin/bash\necho deployed >> "$HOME/maidau-deploy-marker"\n' > "/tmp/maidau-t/Documents/GitHub/Maid BT/install.sh"
+chmod +x "/tmp/maidau-t/Documents/GitHub/Maid BT/install.sh"
 echo hi > "/tmp/maidau-t/Documents/GitHub/Maid BT/f"
-git -C "/tmp/maidau-t/Documents/GitHub/Maid BT" add f
+git -C "/tmp/maidau-t/Documents/GitHub/Maid BT" add f install.sh
 git -C "/tmp/maidau-t/Documents/GitHub/Maid BT" commit -qm one
 git -C "/tmp/maidau-t/Documents/GitHub/Maid BT" push -q origin master 2>/dev/null || git -C "/tmp/maidau-t/Documents/GitHub/Maid BT" push -q origin main 2>/dev/null || true
 echo hi2 > "/tmp/maidau-t/Documents/GitHub/Maid BT/f2"
@@ -161,6 +163,7 @@ ok "maid suite opt-out"
 HOME=/tmp/maidau-t UPDATE_PM=pacman UPDATE_MAID_DEPLOY=1 bash "$PKGDIR/bin/update-all.sh" < /dev/null >/dev/null 2>&1 || fail "deploy run crashed"
 grep -q "Maid BT.*updated (1)" /tmp/maidau-t/.local/share/update-all.log || fail "pull not logged"
 grep -q "Maid BT.*redeployed" /tmp/maidau-t/.local/share/update-all.log || fail "deploy not logged"
+grep -q "deployed" /tmp/maidau-t/maidau-deploy-marker || fail "fixture installer did not run"
 ok "maid suite pull + redeploy with UPDATE_MAID_DEPLOY=1"
 rm -rf /tmp/maidau-origin.git
 rm -rf /tmp/maidau-t
