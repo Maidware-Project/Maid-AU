@@ -1,0 +1,7 @@
+#!/bin/bash
+case "$1" in
+  *Updatable*) echo "Update available, downloading... updated." ;;
+  *Current*) echo "AppImage is up to date." ;;
+  *) echo "No update information found."; exit 1 ;;
+esac
+exit 0

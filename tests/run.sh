@@ -115,6 +115,26 @@ HOME=/tmp/maidau-t UPDATE_PM=zypper UPDATE_CONTROLLERS=1 bash "$PKGDIR/bin/updat
 grep -q "Installing xone-kmp-test" /tmp/maidau-t/.local/share/update-all.log || fail "opt-in controllers did not run"
 ok "controllers run when opted in"
 
+echo "== appimages =="
+fresh_home
+export NOTIFY_LOG=/tmp/maidau-t/notify.log
+mkdir -p /tmp/maidau-t/AppImages
+: > /tmp/maidau-t/AppImages/Current.AppImage
+: > /tmp/maidau-t/AppImages/Updatable.AppImage
+mkdir -p /tmp/maidau-t/.config
+printf 'DlApp|https://example.com/dl.AppImage\n' > /tmp/maidau-t/.config/maidau-appimages.conf
+HOME=/tmp/maidau-t UPDATE_PM=pacman bash "$PKGDIR/bin/update-all.sh" --check < /dev/null 2>&1 | grep -q "appimg=3" || fail "appimage count"
+ok "appimage check counts tool-managed + links"
+HOME=/tmp/maidau-t UPDATE_PM=pacman bash "$PKGDIR/bin/update-all.sh" < /dev/null >/dev/null 2>&1 || fail "appimage update run crashed"
+grep -q "appimage link: DlApp.AppImage: downloaded." /tmp/maidau-t/.local/share/update-all.log || fail "link download missing"
+[ -x /tmp/maidau-t/AppImages/DlApp.AppImage ] || fail "downloaded file not installed/executable"
+ls /tmp/maidau-t/AppImages/DlApp.AppImage.bak-* >/dev/null 2>&1 || true
+grep -q "Updatable.AppImage: updated." /tmp/maidau-t/.local/share/update-all.log || fail "tool update missing"
+ok "appimage update (tool + link + backup)"
+HOME=/tmp/maidau-t UPDATE_PM=pacman bash "$PKGDIR/bin/update-all.sh" < /dev/null >/dev/null 2>&1 || fail "rerun crashed"
+grep -q "unchanged, skipped." /tmp/maidau-t/.local/share/update-all.log || fail "second run re-downloaded"
+ok "appimage links idempotent via etag cache"
+
 echo "== cleanup =="
 rm -rf /tmp/maidau-t
 ok "cleanup"

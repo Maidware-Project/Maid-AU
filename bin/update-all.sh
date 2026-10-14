@@ -254,6 +254,104 @@ flatpak_update() {
   fi
 }
 
+appimage_dirs() {
+  for d in "$HOME/AppImages" "$HOME/Applications" /opt/appimages; do
+    [ -d "$d" ] && echo "$d"
+  done
+}
+
+appimage_files() {
+  local d
+  for d in $(appimage_dirs); do
+    find "$d" -maxdepth 2 -type f -name "*.AppImage" 2>/dev/null
+  done
+}
+
+appimage_check() {
+  # echo count of managed AppImages (embedded info + configured links)
+  local n=0 f
+  if command -v appimageupdatetool >/dev/null 2>&1; then
+    for f in $(appimage_files); do
+      if echo n | appimageupdatetool "$f" 2>&1 | grep -qiE "update (available|found)|new version|up to date|already"; then
+        n=$((n+1))
+      fi
+    done
+  fi
+  if [ -f "$HOME/.config/maidau-appimages.conf" ]; then
+    n=$((n + $(grep -vcE '^\s*(#|$)' "$HOME/.config/maidau-appimages.conf" || true)))
+  fi
+  log "check: appimages: ${n} managed."
+  echo "$n"
+}
+
+appimage_update() {
+  echo "--- appimages ---"
+  local f out changed=0
+  if command -v appimageupdatetool >/dev/null 2>&1; then
+    for f in $(appimage_files); do
+      out=$(yes 2>/dev/null | appimageupdatetool "$f" 2>&1 || true)
+      if echo "$out" | grep -qiE "up to date|already|no update information"; then
+        log "appimage: $(basename "$f"): nothing to do."
+      elif echo "$out" | grep -qiE "updat|success"; then
+        log "appimage: $(basename "$f"): updated."
+        UPDATED=1; changed=1
+      else
+        log "appimage: $(basename "$f"): unclear result (see terminal)."
+        echo "$out" | tail -n 5
+        PARTIAL=1
+      fi
+    done
+  else
+    log "appimage: no appimageupdatetool (skipping embedded updates)."
+  fi
+  appimage_links
+  [ "$changed" = "1" ] && UPDATED=1
+  return 0
+}
+
+appimage_links() {
+  # user-provided direct links: Name|URL per line. downloads only when the
+  # remote changed (ETag/Last-Modified cache), backs up before replacing.
+  local conf="$HOME/.config/maidau-appimages.conf"
+  local state="$HOME/.local/share/maidau-appimages.state"
+  [ -f "$conf" ] || return 0
+  command -v curl >/dev/null 2>&1 || { log "appimage links: no curl, skipped."; return 0; }
+  mkdir -p "$(dirname "$state")"; touch "$state" 2>/dev/null || true
+  local name url dest etag lastmod cached tmp dl
+  while IFS='|' read -r name url _rest; do
+    case "$name" in ''|\#*) continue ;; esac
+    [ -n "$url" ] || continue
+    dest=$(appimage_files | grep -m1 "/$(basename "$name" .AppImage)" || true)
+    if [ -z "$dest" ]; then
+      dest="$HOME/AppImages/$(basename "$name")"
+      [ "${dest%.AppImage}" = "$dest" ] && dest="$dest.AppImage"
+    fi
+    etag=$(curl -sI "$url" 2>/dev/null | grep -i '^etag:' | tr -d '\r' | sed 's/^[Ee][Tt][Aa][Gg]: *//;s/ *$//')
+    lastmod=$(curl -sI "$url" 2>/dev/null | grep -i '^last-modified:' | tr -d '\r' | sed 's/^[Ll]ast-[Mm]odified: *//;s/ *$//')
+    cached=$(grep -m1 "^$(basename "$dest")|" "$state" 2>/dev/null || true)
+    if [ -n "$etag$lastmod" ] && [ "$cached" = "$(basename "$dest")|$etag|$lastmod" ]; then
+      log "appimage link: $(basename "$dest"): unchanged, skipped."
+      continue
+    fi
+    tmp=$(mktemp /tmp/maidau-appimg.XXXXXX) || continue
+    if curl -sL --max-time 300 -o "$tmp" "$url" 2>/dev/null && [ -s "$tmp" ]; then
+      mkdir -p "$(dirname "$dest")"
+      if [ -e "$dest" ]; then
+        cp -a "$dest" "${dest}.bak-$(date +%Y%m%d-%H%M%S)" 2>/dev/null || true
+      fi
+      mv "$tmp" "$dest" && chmod +x "$dest"
+      log "appimage link: $(basename "$dest"): downloaded."
+      UPDATED=1
+      sed -i "/^$(basename "$dest")|/d" "$state" 2>/dev/null || true
+      echo "$(basename "$dest")|$etag|$lastmod" >> "$state"
+    else
+      rm -f "$tmp"
+      log "appimage link: $(basename "$dest"): download FAILED"
+      PARTIAL=1
+    fi
+  done < "$conf"
+}
+
 fwupd_check() {
   if fwupdmgr get-updates >"$TMP" 2>&1; then
     if grep -qi "No updatable devices" "$TMP"; then
@@ -336,8 +434,11 @@ if [ "${1:-}" = "--check" ]; then
     UPDATED=0
     if out=$(controllers_hook check); then echo "RC=0 VAL=$out UPDATED=$UPDATED"; else echo "RC=1 VAL=0 UPDATED=$UPDATED"; fi ) >"$TMP.ctrl" 2>&1 &
   CTLPID=$!
-  wait "$PMPID"; wait "$FLPID"; wait "$FWDPID"; wait "$CTLPID"
-  cat "$TMP.pmlog" "$TMP.flat" "$TMP.fw" "$TMP.ctrl" 2>/dev/null
+  ( TMP=$(mktemp /tmp/maidau-job.XXXXXX); trap 'rm -f "$TMP"' EXIT;
+    if out=$(appimage_check); then echo "RC=0 VAL=$out"; else echo "RC=1 VAL=0"; fi ) >"$TMP.appimg" 2>&1 &
+  APID=$!
+  wait "$PMPID"; wait "$FLPID"; wait "$FWDPID"; wait "$CTLPID"; wait "$APID"
+  cat "$TMP.pmlog" "$TMP.flat" "$TMP.fw" "$TMP.ctrl" "$TMP.appimg" 2>/dev/null
   if [ -f "$PMF" ]; then . "$PMF"; else CHECK_FAIL=1; log "check: $PM_LABEL query FAILED"; fi
   if [ "${RC:-}" != "0" ]; then CHECK_FAIL=1; log "check: $PM_LABEL query FAILED"; fi
   FLAT_RC=$(sed -n 's/^RC=\([01]\) VAL=.*/\1/p' "$TMP.flat" | tail -n 1)
@@ -347,14 +448,17 @@ if [ "${1:-}" = "--check" ]; then
   CTL_RC=$(sed -n 's/^RC=\([01]\) VAL=.*/\1/p' "$TMP.ctrl" | tail -n 1)
   CTRL_N=$(sed -n 's/^RC=[01] VAL=\([^ ]*\).*/\1/p' "$TMP.ctrl" | tail -n 1)
   CTL_UPD=$(sed -n 's/^RC=[01] VAL=[^ ]* UPDATED=\([01]\)/\1/p' "$TMP.ctrl" | tail -n 1)
+  APPIMG_RC=$(sed -n 's/^RC=\([01]\) VAL=.*/\1/p' "$TMP.appimg" | tail -n 1)
+  APPIMG_N=$(sed -n 's/^RC=[01] VAL=\([^ ]*\).*/\1/p' "$TMP.appimg" | tail -n 1)
   if [ "$FLAT_RC" != "0" ]; then CHECK_FAIL=1; log "check: flatpak query FAILED"; fi
   if [ "$FW_RC" != "0" ]; then CHECK_FAIL=1; log "check: firmware query FAILED"; fi
   if [ "$CTL_RC" != "0" ]; then CHECK_FAIL=1; log "check: controllers query FAILED"; fi
+  if [ "$APPIMG_RC" != "0" ]; then CHECK_FAIL=1; log "check: appimage query FAILED"; fi
   if [ "$CTL_UPD" = "1" ]; then UPDATED=1; fi
-  CTRL_N=${CTRL_N:-0}; FLAT_N=${FLAT_N:-0}; FW_N=${FW_N:-0}
+  CTRL_N=${CTRL_N:-0}; FLAT_N=${FLAT_N:-0}; FW_N=${FW_N:-0}; APPIMG_N=${APPIMG_N:-0}
   SNAP_NOW=$(snap_last_q); [ -n "$SNAP_NOW" ] && log "check: latest snapshot #$SNAP_NOW (rollback available)."
 
-  TOTAL=$((ZYPPER_N + FLAT_N + FW_N + CTRL_N))
+  TOTAL=$((ZYPPER_N + FLAT_N + FW_N + CTRL_N + APPIMG_N))
   if [ "$CHECK_FAIL" -ne 0 ]; then
     notify "Update check failed" "Check $LOG" critical dialog-error
   elif [ "$TOTAL" -eq 0 ]; then
@@ -364,10 +468,10 @@ if [ "${1:-}" = "--check" ]; then
     notify "System update available" "Big update: $PM_LABEL ${ZYPPER_N} (extra ${EXTRA_N}), flatpak ${FLAT_N}, firmware ${FW_N}, controllers ${CTRL_N}. Run System Updater." normal software-update-urgent
     echo "System update available (core/firmware). $PM_LABEL=${ZYPPER_N} extra=${EXTRA_N} flatpak=${FLAT_N} firmware=${FW_N} controllers=${CTRL_N}"
   else
-    notify "App updates available" "$PM_LABEL ${ZYPPER_N} (extra ${EXTRA_N}), flatpak ${FLAT_N}, controllers ${CTRL_N}. No reboot needed - run System Updater." normal software-update-available
-    echo "App updates available, no reboot needed. $PM_LABEL=${ZYPPER_N} extra=${EXTRA_N} flatpak=${FLAT_N} controllers=${CTRL_N}"
+    notify "App updates available" "$PM_LABEL ${ZYPPER_N} (extra ${EXTRA_N}), flatpak ${FLAT_N}, controllers ${CTRL_N}, appimages ${APPIMG_N}. No reboot needed - run System Updater." normal software-update-available
+    echo "App updates available, no reboot needed. $PM_LABEL=${ZYPPER_N} extra=${EXTRA_N} flatpak=${FLAT_N} controllers=${CTRL_N} appimg=${APPIMG_N}"
   fi
-  say "=== check done ($PM_LABEL=$ZYPPER_N extra=$EXTRA_N flatpak=$FLAT_N firmware=$FW_N controllers=$CTRL_N system=$SYS_HIT) ==="
+  say "=== check done ($PM_LABEL=$ZYPPER_N extra=$EXTRA_N flatpak=$FLAT_N firmware=$FW_N controllers=$CTRL_N appimg=$APPIMG_N system=$SYS_HIT) ==="
   if [ -t 1 ]; then
     echo ""; read -n1 -s -r -p "Done - press any key to close..."; echo ""
   fi
@@ -416,6 +520,7 @@ if [ -f "$FLATRF" ]; then . "$FLATRF"; else FAILED=1; log "flatpak: result lost"
 [ "${BG_UPDATED:-0}" = "1" ] && UPDATED=1
 [ "${BG_FAILED:-0}" = "1" ] && FAILED=1
 controllers_hook update
+appimage_update
 fwupd_update
 
 say "=== done (failed=$FAILED updated=$UPDATED important=$IMPORTANT) ==="

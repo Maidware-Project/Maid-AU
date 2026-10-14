@@ -1,0 +1,14 @@
+#!/bin/bash
+if [ "$1" = "-sI" ]; then
+  echo 'ETag: "v2"'
+  echo 'Last-Modified: Wed, 14 Oct 2026 00:00:00 GMT'
+  exit 0
+fi
+out=""
+prev=""
+for a in "$@"; do
+  if [ "$prev" = "-o" ]; then out="$a"; fi
+  prev="$a"
+done
+[ -n "$out" ] && echo "fake-new-binary" > "$out"
+exit 0
