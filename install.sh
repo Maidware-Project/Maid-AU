@@ -2,19 +2,31 @@
 # Universal installer: Arch (pacman), Debian/Ubuntu (apt), Fedora (dnf),
 # openSUSE (zypper). Copies files (no symlinks — survives folder moves).
 # Usage: ./install.sh [--check] [--no-packages] [--uninstall [--purge]]
+#          [--prefix=DIR] [--no-config]
+# --prefix installs program files elsewhere (packaging: DESTDIR supported);
+# user setup is skipped for non-default prefixes and with --no-config.
 set -u
 PKGDIR="$(cd "$(dirname "$0")" && pwd)"
 BACKUP_TS="$(date +%Y%m%d-%H%M%S)"
-CHECK=0; NO_PKGS=0; UNINST=0; PURGE=0
+CHECK=0; NO_PKGS=0; UNINST=0; PURGE=0; NOCONFIG=0; PREFIX=""
 for a in "$@"; do
   case "$a" in
     --check) CHECK=1 ;;
     --no-packages) NO_PKGS=1 ;;
     --uninstall) UNINST=1 ;;
     --purge) PURGE=1 ;;
-    *) echo "unknown option: $a (see: --check --no-packages --uninstall [--purge])" >&2; exit 2 ;;
+    --no-config) NOCONFIG=1 ;;
+    --prefix=*) PREFIX="${a#--prefix=}" ;;
+    *) echo "unknown option: $a (see header)" >&2; exit 2 ;;
   esac
 done
+if [ -z "$PREFIX" ]; then PREFIX="$HOME/.local"; fi
+if [ "$PREFIX" = "$HOME/.local" ]; then
+  BINDIR="$HOME/.local/bin"; SHAREDIR="$HOME/.local/share"; REWRITE=1
+else
+  BINDIR="${DESTDIR:-}$PREFIX/bin"; SHAREDIR="${DESTDIR:-}$PREFIX/share"; REWRITE=2
+  NOCONFIG=1
+fi
 
 say()  { echo "==> $*"; }
 warn() { echo "!! $*" >&2; }
