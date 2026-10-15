@@ -186,6 +186,20 @@ ok "maid suite pull + redeploy with UPDATE_MAID_DEPLOY=1"
 rm -rf /tmp/maidau-origin.git
 rm -rf /tmp/maidau-t
 
+echo "== controllers via helper (non-suse) =="
+fresh_home
+export NOTIFY_LOG=/tmp/maidau-t/notify.log
+mkdir -p /tmp/maidau-t/.local/bin
+printf '#!/bin/bash\necho "helper gamepads: $1"\n[ "$1" = "check" ] && exit 2\nexit 0\n' > /tmp/maidau-t/.local/bin/mod-gamepad.sh
+chmod +x /tmp/maidau-t/.local/bin/mod-gamepad.sh
+HOME=/tmp/maidau-t UPDATE_PM=pacman UPDATE_CONTROLLERS=1 bash "$PKGDIR/bin/update-all.sh" --check < /dev/null 2>&1 | grep -q "helper gamepads: check" || fail "helper not driven in check"
+grep -q "helper reports issues" /tmp/maidau-t/.local/share/update-all.log || fail "helper issue not logged"
+ok "controllers delegated to helper in check"
+HOME=/tmp/maidau-t UPDATE_PM=pacman UPDATE_CONTROLLERS=1 bash "$PKGDIR/bin/update-all.sh" < /dev/null >/dev/null 2>&1 || fail "helper update run crashed"
+grep -q "controllers: helper run ok" /tmp/maidau-t/.local/share/update-all.log || fail "helper run not logged"
+ok "controllers delegated to helper in update"
+rm -rf /tmp/maidau-t
+
 echo "== cleanup =="
 rm -rf /tmp/maidau-t
 ok "cleanup"

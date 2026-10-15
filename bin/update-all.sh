@@ -222,8 +222,28 @@ controllers_hook() {
       echo "$CTRL_N"
     fi
   else
-    log "controllers: backend '$PM' has no controller hook (see README)."
-    [ "$1" = "check" ] && echo 0
+    if [ -x "$HOME/.local/bin/mod-gamepad.sh" ]; then
+      # Maid Helper owns multi-distro gamepads; AU just drives it.
+      if [ "$1" = "check" ]; then
+        if "$HOME/.local/bin/mod-gamepad.sh" check >"$TMP" 2>&1; then
+          log "check: controllers: helper reports healthy."
+        else
+          cat "$TMP"; log "check: controllers: helper reports issues (see above)."
+        fi
+        echo 0
+      else
+        echo "--- controllers via Maid Helper ---"
+        if "$HOME/.local/bin/mod-gamepad.sh" fix >"$TMP" 2>&1; then
+          cat "$TMP"; log "controllers: helper run ok."
+        else
+          cat "$TMP"; log "controllers: helper run needs attention."
+          PARTIAL=1
+        fi
+      fi
+    else
+      log "controllers: backend '$PM' has no controller hook (Maid Helper adds gamepads here)."
+      [ "$1" = "check" ] && echo 0
+    fi
   fi
 }
 
