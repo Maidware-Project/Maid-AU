@@ -151,4 +151,4 @@ Opt out anytime with `MAID_SUITE=0`.
 
 ## License
 
-MIT — see LICENSE.
+MIT — see LICENSE. a Maidware Project, Forkable open source tools served to help
