@@ -3,7 +3,7 @@
 small, reviewable changes only — one logical change per pull request
 (the kernel puts it well: one patch, one problem; if your description
 gets long, split it). read AGENTS.md first (it applies to humans and
-AI assistants alike). maintained by @visadaking.
+AI assistants alike). maintained by Maidware Project.
 
 ## commits
 
