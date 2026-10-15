@@ -54,8 +54,10 @@ dependency comes from your distro repos.
 - `update-all.sh --last` — when the last successful run happened
 - AppImages in `~/AppImages` / `~/Applications` update via embedded
   info (`appimageupdatetool` when installed); extra direct links go in
-  `~/.config/maidau-appimages.conf` as `Name|URL` lines (downloaded
-  only when changed, old file backed up first)
+  `~/.config/maidau-appimages.conf` as `Name|URL` (or `Name|URL|SHA256`
+  to pin the hash) lines. downloads are https-only, a pinned hash is
+  verified before replacing (mismatch = left alone), old file backed
+  up first, only downloaded when changed
 - `update-all.sh --require-snapshot` — combine with a run: abort the
   system upgrade unless snapshots actually work (see safety)
 - Log: `~/.local/share/update-all.log` (last 1000 lines kept)

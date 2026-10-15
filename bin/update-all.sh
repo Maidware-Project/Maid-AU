@@ -321,24 +321,49 @@ appimage_links() {
   [ -f "$conf" ] || return 0
   command -v curl >/dev/null 2>&1 || { log "appimage links: no curl, skipped."; return 0; }
   mkdir -p "$(dirname "$state")"; touch "$state" 2>/dev/null || true
-  local name url dest etag lastmod cached tmp dl
-  while IFS='|' read -r name url _rest; do
+  local name url sha pin dest etag lastmod cached tmp dl got hexonly
+  while IFS='|' read -r name url sha _rest; do
     case "$name" in ''|\#*) continue ;; esac
     [ -n "$url" ] || continue
+    # fail closed: plaintext URLs never fetch, malformed pins never install.
+    case "$url" in
+      https://*) : ;;
+      *) log "appimage link: $name: refused (not https) — left alone"; PARTIAL=1; continue ;;
+    esac
+    pin=""
+    if [ -n "${sha:-}" ]; then
+      hexonly=$(echo "$sha" | tr -d '0-9a-fA-F')
+      if [ -z "$hexonly" ] && [ "${#sha}" = "64" ]; then
+        pin="$sha"
+      else
+        log "appimage link: $name: bad pinned hash (want 64 hex chars) — left alone"
+        PARTIAL=1
+        continue
+      fi
+    fi
     dest=$(appimage_files | grep -m1 "/$(basename "$name" .AppImage)" || true)
     if [ -z "$dest" ]; then
       dest="$HOME/AppImages/$(basename "$name")"
       [ "${dest%.AppImage}" = "$dest" ] && dest="$dest.AppImage"
     fi
-    etag=$(curl -sI "$url" 2>/dev/null | grep -i '^etag:' | tr -d '\r' | sed 's/^[Ee][Tt][Aa][Gg]: *//;s/ *$//')
-    lastmod=$(curl -sI "$url" 2>/dev/null | grep -i '^last-modified:' | tr -d '\r' | sed 's/^[Ll]ast-[Mm]odified: *//;s/ *$//')
+    etag=$(curl -sI --proto '=https' "$url" 2>/dev/null | grep -i '^etag:' | tr -d '\r' | sed 's/^[Ee][Tt][Aa][Gg]: *//;s/ *$//')
+    lastmod=$(curl -sI --proto '=https' "$url" 2>/dev/null | grep -i '^last-modified:' | tr -d '\r' | sed 's/^[Ll]ast-[Mm]odified: *//;s/ *$//')
     cached=$(grep -m1 "^$(basename "$dest")|" "$state" 2>/dev/null || true)
     if [ -n "$etag$lastmod" ] && [ "$cached" = "$(basename "$dest")|$etag|$lastmod" ]; then
       log "appimage link: $(basename "$dest"): unchanged, skipped."
       continue
     fi
     tmp=$(mktemp /tmp/maidau-appimg.XXXXXX) || continue
-    if curl -sL --max-time 300 -o "$tmp" "$url" 2>/dev/null && [ -s "$tmp" ]; then
+    if curl -sL --proto '=https' --max-time 300 -o "$tmp" "$url" 2>/dev/null && [ -s "$tmp" ]; then
+      if [ -n "$pin" ]; then
+        got=$(sha256sum "$tmp" 2>/dev/null | awk '{print $1}')
+        if [ "$got" != "$pin" ]; then
+          rm -f "$tmp"
+          log "appimage link: $(basename "$dest"): HASH MISMATCH (got ${got:-none}) — left alone"
+          PARTIAL=1
+          continue
+        fi
+      fi
       mkdir -p "$(dirname "$dest")"
       if [ -e "$dest" ]; then
         cp -a "$dest" "${dest}.bak-$(date +%Y%m%d-%H%M%S)" 2>/dev/null || true
