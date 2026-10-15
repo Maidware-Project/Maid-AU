@@ -1,5 +1,11 @@
 # changelog
 
+## controllers via helper off-suse
+
+- non-openSUSE distros drive Maid Helper's gamepad doctor when it is
+  installed (same `UPDATE_CONTROLLERS=1` opt-in, same logging); without
+  Helper the old guidance stands.
+
 ## appimage integrity
 
 - direct links (`Name|URL`) fetch https-only now (plaintext refused,
