@@ -6,11 +6,9 @@ answers — that is the entire scope.
 ## no politics, no policing
 
 - no ideological or political messaging in code, commits, comments,
-  pull requests, issues, or docs — from any side, about anything
-  (flags, slogans, causes, elections, wars). examples of what does
-  not belong here: "free palestine", "maga", "slava ukraini",
-  "trans rights", "let's go brandon", etc. the list could go on
-  forever, which is exactly why none of it belongs here.
+  pull requests, issues, or docs — from any side, about anything.
+  flags, slogans, causes, elections, wars: if that's what it is,
+  it doesn't belong here, no matter which side it's on.
 - nobody gets judged, silenced, or rejected for beliefs, identity,
   or affiliations — only contributions get judged, technically.
   bad code gets rejected for being bad code.
