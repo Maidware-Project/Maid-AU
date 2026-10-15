@@ -19,7 +19,8 @@ command -v shellcheck >/dev/null 2>&1 && shellcheck -S error "$PKGDIR"/bin/*.sh 
 ok "syntax"
 
 echo "== personal data =="
-if grep -rn "/home/visa" "$PKGDIR/bin" "$PKGDIR/README.md" "$PKGDIR/install.sh" 2>/dev/null | grep -v "s|/home/visa|"; then
+if grep -rni -E "90:BF|SmartAction|soundcore|Liberty|Mothership|10\.0\.0|/home/visa" \
+    "$PKGDIR/bin" "$PKGDIR/README.md" "$PKGDIR/install.sh" 2>/dev/null | grep -v "s|/home/visa|"; then
   fail "personal string leaked"
 fi
 ok "no personal data"
