@@ -17,6 +17,7 @@ cleverness. The goal is users who understand their system, not users
 dependent on one.
 
 On-demand system updater (flatpak + native + firmware). No services.
+Lowercase terse voice in docs (README, messages, notifications).
 
 ## Layout
 
