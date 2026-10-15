@@ -110,7 +110,7 @@ copy_one() {
   local src="$1" dest="$2" rewrite="${3:-0}" tmp=""
   if [ "$CHECK" = "1" ]; then echo "COPY $dest"; return 0; fi
   mkdir -p "$(dirname "$dest")"
-  # render first, compare second: $src still holds the /home/visa
+  # render first, compare second: $src still holds the Exec-path
   # placeholder, which never equals an installed file — comparing raw
   # would back up on every run. compare what we would write instead.
   tmp="$(mktemp)" || return 1
