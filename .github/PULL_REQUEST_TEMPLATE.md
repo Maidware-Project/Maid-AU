@@ -19,4 +19,5 @@ bash install.sh --check → clean
 - [ ] `bash tests/run.sh` green on my machine (see above)
 - [ ] no personal data (MACs, names, IPs, home paths)
 - [ ] docs updated with the behavior (README/CHANGELOG)
-- [ ] AI-assisted? say so here: yes / no
+- [ ] commits signed off (`git commit -s`)
+- [ ] AI-assisted? name the tool here + `Assisted-by:` trailer in the commits
