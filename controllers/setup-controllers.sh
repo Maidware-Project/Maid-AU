@@ -47,17 +47,21 @@ say "--- controllers (bazzite-equivalent) ---"
 
 # 1. Install / update packages (zypper dup in updater already covers updates,
 #    but explicit install guarantees they stay present after kernel flips)
-if $SUDO zypper --non-interactive install --no-confirm ${ZYPPER_NO_REFRESH:+--no-refresh} "${PKGS[@]}" > /tmp/ctrl-install.log 2>&1; then
-  cat /tmp/ctrl-install.log
-  if grep -qiE "Nothing to do|already installed|up to date|No updates" /tmp/ctrl-install.log; then
+# Private temp log (mktemp, not a fixed /tmp path): a pre-placed symlink
+# at a fixed path could redirect this script's output elsewhere.
+CTRL_LOG="$(mktemp -t ctrl-install-XXXXXX.log)" || { say "controllers: no temp file, skipping"; exit 1; }
+trap 'rm -f "$CTRL_LOG"' EXIT
+if $SUDO zypper --non-interactive install --no-confirm ${ZYPPER_NO_REFRESH:+--no-refresh} "${PKGS[@]}" > "$CTRL_LOG" 2>&1; then
+  cat "$CTRL_LOG"
+  if grep -qiE "Nothing to do|already installed|up to date|No updates" "$CTRL_LOG"; then
     log "controllers: packages up to date."
   else
-    grep -E "Installing|Updating|installing|updating|going to be" /tmp/ctrl-install.log >> "$LOG" 2>/dev/null || true
+    grep -E "Installing|Updating|installing|updating|going to be" "$CTRL_LOG" >> "$LOG" 2>/dev/null || true
   fi
 else
-  cat /tmp/ctrl-install.log
+  cat "$CTRL_LOG"
   log "controllers: zypper install FAILED"
-  grep -iE "error|failed" /tmp/ctrl-install.log >> "$LOG" 2>/dev/null || true
+  grep -iE "error|failed" "$CTRL_LOG" >> "$LOG" 2>/dev/null || true
   # don't abort updater on controller failure; report and continue
   [ "$MODE" = "--update" ] || exit 1
 fi

@@ -1,5 +1,16 @@
 # changelog
 
+## installer + updater fixes
+
+- backups only on real change: the compare now runs against the
+  rewritten file content, so reinstalls no longer pile up
+  `.bak-<timestamp>` copies of the desktop file.
+- install and `--uninstall` both honor `--prefix`/`DESTDIR` (program
+  files use the same `BINDIR`/`SHAREDIR` either way).
+- controller zypper log uses `mktemp` instead of a fixed `/tmp` path.
+- `--require-snapshot` flag parsing keeps arguments intact (array,
+  no word-splitting rebuild).
+
 ## maid suite awareness
 
 - the updater knows its own family (Maid BT, Maidshare, watcher): `--check` reports behind checkouts,
