@@ -16,6 +16,7 @@ bash install.sh --check → clean
 ## Checklist
 
 - [ ] one thing per PR, small enough to review without an assistant
+- [ ] I understand every line of this change (AI-assisted parts included)
 - [ ] `bash tests/run.sh` green on my machine (see above)
 - [ ] no personal data (MACs, names, IPs, home paths)
 - [ ] docs updated with the behavior (README/CHANGELOG)

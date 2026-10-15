@@ -29,6 +29,17 @@ AI assistants alike). maintained by Maidware Project.
   suite enforces this, CI fails it
 - lay out the fix: what broke, what you changed, why that way
 
+
+## know your patch
+
+- understand every line you submit — including AI-written parts.
+  if you can't explain what a line does, don't send it. "the AI
+  wrote it" is never an explanation.
+- basic linux required: terminal use, file permissions, what sudo
+  does, where user configs live (~/.config). you don't need to be
+  an expert — but this project ships scripts that run on people's
+  machines, so guessing is not contributing.
+
 ## issues
 
 use the bug report template, paste the diagnostics it asks for, trim
