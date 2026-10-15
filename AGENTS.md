@@ -29,6 +29,8 @@ Lowercase terse voice in docs (README, messages, notifications).
 ## Rules
 
 - No personal data in repo. Installer copies, never symlinks, backs up.
+- CODE_OF_CONDUCT.md applies to code, comments, and docs:
+  technical scope, no politics, stay neutral.
 - Commits: short lowercase summaries with a prefix (`fix:`, `feat:`, `docs:`,
   `tests:`, `chore:`), one logical change each. Sign off every commit
   (`git commit -s`); AI-assisted work adds an `Assisted-by:` trailer
