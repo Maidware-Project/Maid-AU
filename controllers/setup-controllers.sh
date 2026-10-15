@@ -119,13 +119,28 @@ done
 #    openSUSE only ships classic xone which disables xpad for Xbox One pads.
 #    If you need Xbox 360 + Xbox One pads at the same time, rebuild as xonedo:
 if [ "${XONEDO:-0}" = "1" ]; then
-  say "controllers: XONEDO=1 requested, building OpenGamingCollective/xonedo via DKMS..."
+  say "controllers: XONEDO=1 requested: cloning and building third-party"
+  say "controllers: code (OpenGamingCollective/xonedo) as root. it is not"
+  say "controllers: maidware's and it changes over time - set XONEDO_REF=<commit>"
+  say "controllers: to pin it to something you've looked at."
   SRC="/usr/src/xonedo-0.1"
+  XONEDO_URL="https://github.com/OpenGamingCollective/xonedo.git"
   if [ ! -d "$SRC" ]; then
     $SUDO zypper --non-interactive install --no-confirm ${ZYPPER_NO_REFRESH:+--no-refresh} dkms kernel-default-devel curl bsdtar 2>&1 | tail -n 5
-    $SUDO /usr/bin/git clone https://github.com/OpenGamingCollective/xonedo.git "$SRC" 2>&1 | tail -n 3
+    $SUDO /usr/bin/git clone "$XONEDO_URL" "$SRC" 2>&1 | tail -n 3
   fi
-  ( cd "$SRC" && $SUDO /usr/bin/git pull --ff-only 2>&1 | tail -n 3; $SUDO /usr/sbin/dkms install -m xonedo -v 0.1 --force 2>&1 | tail -n 10 )
+  (
+    cd "$SRC" || exit 1
+    # don't trust whatever origin the directory already had
+    $SUDO /usr/bin/git remote set-url origin "$XONEDO_URL" 2>/dev/null || true
+    if [ -n "${XONEDO_REF:-}" ]; then
+      $SUDO /usr/bin/git fetch --depth 1 origin "$XONEDO_REF" 2>&1 | tail -n 1
+      $SUDO /usr/bin/git checkout -q --detach FETCH_HEAD 2>&1 | tail -n 1
+    else
+      $SUDO /usr/bin/git pull --ff-only 2>&1 | tail -n 3
+    fi
+    $SUDO /usr/sbin/dkms install -m xonedo -v 0.1 --force 2>&1 | tail -n 10
+  )
   $SUDO /usr/sbin/modprobe xonedo 2>&1 || true
   log "controllers: xonedo build attempted (see above)."
 fi
