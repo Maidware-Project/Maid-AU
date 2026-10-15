@@ -2,15 +2,15 @@
 
 One maintainer plus a few friends helping out. Keep changes small enough
 to review, skip refactors nobody asked for, and ask before adding a
-dependency.
+dependency. Anything that touches packages, snapshots or sudo is the part
+to slow down on.
 
-Say what you actually did, not what you were asked to do. If a test,
-a build, or a hardware check didn't happen this session, don't write
-that it passed. Failures and shortcuts are worth writing down as they
-are.
+Say what you actually did, not what you were asked to do. The stub farm
+makes the suite cheap to run, so there is no reason to claim a green run
+you didn't do.
 
-The assistant helps, a person decides. Write so somebody can follow it
-with no assistant around: plain names, plain words, nothing clever.
+The assistant helps, a person decides. These scripts run as root on other
+people's machines, so a human has to understand every line before it ships.
 
 On-demand system updater (flatpak + native + firmware). No services.
 Lowercase terse voice in docs (README, messages, notifications).

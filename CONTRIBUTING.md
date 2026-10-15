@@ -1,9 +1,9 @@
 # contributing
 
-small, reviewable changes only - one logical change per pull request
-(the kernel puts it well: one patch, one problem; if your description
-gets long, split it). read AGENTS.md first (it applies to humans and
-AI assistants alike). maintained by Maidware Project.
+small, reviewable changes only - one logical change per pull request. if
+it needs a paragraph to explain, it's two changes. read AGENTS.md first;
+it applies to humans and AI assistants alike. maintained by Maidware
+Project.
 
 ## commits
 
@@ -11,39 +11,38 @@ AI assistants alike). maintained by Maidware Project.
   `tests:`, `chore:` - e.g. `fix: print PARTIAL when only the flatpak
   layer fails`
 - sign off every commit (`git commit -s` appends it):
-  `Signed-off-by: Your Name <you@example.com>`
-  (developer's certificate of origin - proves you may contribute it)
-- AI-assisted work gets an `Assisted-by:` trailer naming the tool,
-  e.g. `Assisted-by: opencode (muse-spark)`. the kernel requires this;
-  so do we. never claim a test ran that didn't.
-- bug fixes reference what they fix: `Fixes: #123` or
-  `Closes: #123` (issue number, or the symptom if no issue exists).
+  `Signed-off-by: Your Name <you@example.com>` - the developer's
+  certificate of origin, your word that you may contribute it
+- AI-assisted work gets an `Assisted-by:` trailer naming the tool, e.g.
+  `Assisted-by: opencode (muse-spark)`. the kernel requires it; so do we.
+  never claim a run you didn't do.
+- bug fixes name what they fix: `Fixes: #123` or `Closes: #123`
 
 ## before opening anything
 
-- `bash tests/run.sh` green on your machine - paste the results
-  in the PR (the template asks for them). tested on openSUSE; Arch
-  and Fedora too if you can (VM or live USB counts - say which).
+- `bash tests/run.sh` green, output pasted in the pull request. the stub
+  farm fakes pacman, apt, dnf and zypper, so the whole thing runs anywhere
+  without touching a real system: --check counts, strict abort without
+  snapshots, PARTIAL on an AUR failure, appimage hash pinning, and the
+  maid suite handoff.
 - `bash install.sh --check` writes nothing
-- hardware touched? say what device/distro you verified live
-- no personal data anywhere (MACs, names, IPs, home paths) - the
-  suite enforces this, CI fails it
-- lay out the fix: what broke, what you changed, why that way
-
+- changed anything that removes or replaces files? say how you tested the
+  rollback, not just the happy path
+- no personal data anywhere (MACs, names, IPs, home paths). the suite
+  greps for it and CI fails on a hit
 
 ## know your patch
 
-understand every line you send, assistant-written parts included. if you
-can't say what a line does, drop it. "the assistant wrote it" doesn't
-answer the question.
+the updater runs as root on other people's machines. understand every line
+you send, assistant-written ones included, and drop anything you can't
+explain.
 
-you need basic linux: the terminal, file permissions, what sudo does,
-where configs live (~/.config). not an expert, but this project ships
-scripts that run on other people's machines, so guessing isn't
-contributing.
+you need basic linux: the terminal, permissions, sudo, `~/.config`, and a
+feel for what a package manager really does. guessing here has real
+consequences, so it isn't contributing.
 
 ## issues
 
-use the bug report template, paste the diagnostics it asks for, trim
-personal data before posting publicly. "it doesn't work" with nothing
-attached will be closed with a pointer back here.
+use the bug report template and paste the diagnostics it asks for - distro,
+package manager, the failing log line. trim anything personal. "it doesn't
+work" on its own gets closed with a pointer back here.
