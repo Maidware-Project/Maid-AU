@@ -1,9 +1,24 @@
 # contributing
 
-small, reviewable changes only — one thing per pull request. read
-AGENTS.md first (it applies to humans and AI assistants alike).
+small, reviewable changes only — one logical change per pull request
+(the kernel puts it well: one patch, one problem; if your description
+gets long, split it). read AGENTS.md first (it applies to humans and
+AI assistants alike). maintained by @visadaking.
 
-before opening anything:
+## commits
+
+- short lowercase summaries with a prefix: `fix:`, `feat:`, `docs:`,
+  `tests:`, `chore:` — e.g. `fix: retry bluetooth connect with backoff`
+- sign off every commit (`git commit -s` appends it):
+  `Signed-off-by: Your Name <you@example.com>`
+  (developer's certificate of origin — proves you may contribute it)
+- AI-assisted work gets an `Assisted-by:` trailer naming the tool,
+  e.g. `Assisted-by: opencode (muse-spark)`. the kernel requires this;
+  so do we. never claim a test ran that didn't.
+- bug fixes reference what they fix: `Fixes: #123` or
+  `Closes: #123` (issue number, or the symptom if no issue exists).
+
+## before opening anything
 
 - `bash tests/run.sh` green on your machine — paste the results
   in the PR (the template asks for them). tested on openSUSE; Arch
@@ -12,10 +27,10 @@ before opening anything:
 - hardware touched? say what device/distro you verified live
 - no personal data anywhere (MACs, names, IPs, home paths) — the
   suite enforces this, CI fails it
-- AI-assisted work: say so in the PR, keep it small enough to review
-  without an assistant, never claim a test ran that didn't
 - lay out the fix: what broke, what you changed, why that way
 
-issues: use the bug report template, paste the diagnostics it asks
-for, trim personal data before posting publicly. "it doesn't work"
-with nothing attached will be closed with a pointer back here.
+## issues
+
+use the bug report template, paste the diagnostics it asks for, trim
+personal data before posting publicly. "it doesn't work" with nothing
+attached will be closed with a pointer back here.

@@ -29,6 +29,10 @@ Lowercase terse voice in docs (README, messages, notifications).
 ## Rules
 
 - No personal data in repo. Installer copies, never symlinks, backs up.
+- Commits: short lowercase summaries with a prefix (`fix:`, `feat:`, `docs:`,
+  `tests:`, `chore:`), one logical change each. Sign off every commit
+  (`git commit -s`); AI-assisted work adds an `Assisted-by:` trailer
+  naming the tool. Bug fixes cite `Fixes: #N`.
 - Destructive actions stay opt-in (`UPDATE_AUR`, `UPDATE_CONTROLLERS`,
   passwordless sudo). `--check` reports, changes nothing.
 - Never hold packages; snapshots before upgrades (documented honestly).

@@ -130,6 +130,7 @@ is reported as an error (see failure policy).
 - Arch: AUR updates counted when `yay`/`paru` exists; AUR *builds*
   only run with `UPDATE_AUR=1` (they run other people's build code).
 - Debian/Ubuntu: every configured repo including PPAs is covered.
+- Linux Mint (incl. LMDE via Debian): same `apt` path, no extra steps.
 
 ## uninstall
 
@@ -141,10 +142,6 @@ bash install.sh --uninstall --purge    # everything out including those, no ques
 packaged installs (`--prefix=/usr`, e.g. the AUR package) uninstall
 from the same prefix — `pacman -R` also works there as usual.
 
-## License
-
-MIT — see LICENSE. a Maidware Project: forkable open-source tools for linux users.
-
 ## the Maid suite (BT, Maidshare, watcher, Helper)
 
 Maid AU knows its own family: `--check` reports when your Maid checkouts
@@ -152,6 +149,6 @@ are behind upstream, a full run pulls them `--ff-only`, and
 `UPDATE_MAID_DEPLOY=1` also reruns each project's installer.
 Opt out anytime with `MAID_SUITE=0`.
 
-## Linux Mint
+## License
 
-Works like Ubuntu (same `apt` path, including LMDE via Debian). No extra steps.
+MIT — see LICENSE.
