@@ -36,7 +36,8 @@ bash install.sh            # deps (sudo) + copy + launcher
 bash install.sh --check    # dry run
 ```
 
-existing files are backed up to `*.bak-<timestamp>`. passwordless runs
+existing files are backed up to `*.bak-<timestamp>` (only when content
+actually changed — reinstalls don't pile up copies). passwordless runs
 are opt-in and risky: a NOPASSWD package manager rule is effectively
 passwordless root for your user (it can install crafted local packages).
 default is asking for sudo, which is fine. to opt in anyway the installer
@@ -111,6 +112,9 @@ is reported as an error (see failure policy).
 bash install.sh --uninstall            # everything out, asks about settings + logs
 bash install.sh --uninstall --purge    # everything out including those, no questions
 ```
+
+packaged installs (`--prefix=/usr`, e.g. the AUR package) uninstall
+from the same prefix — `pacman -R` also works there as usual.
 
 ## License
 
