@@ -6,7 +6,8 @@ AGENTS.md first (it applies to humans and AI assistants alike).
 before opening anything:
 
 - `bash tests/run.sh` green on your machine — paste the results
-  in the PR (the template asks for them)
+  in the PR (the template asks for them). tested on openSUSE; Arch
+  and Fedora too if you can (VM or live USB counts — say which).
 - `bash install.sh --check` writes nothing
 - hardware touched? say what device/distro you verified live
 - no personal data anywhere (MACs, names, IPs, home paths) — the

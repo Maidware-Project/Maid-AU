@@ -143,7 +143,7 @@ from the same prefix — `pacman -R` also works there as usual.
 
 ## License
 
-MIT — see LICENSE.
+MIT — see LICENSE. a Maidware Project: forkable open-source tools for linux users.
 
 ## the Maid suite (BT, Maidshare, watcher, Helper)
 

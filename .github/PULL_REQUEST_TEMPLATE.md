@@ -7,9 +7,10 @@ bash tests/run.sh → ALL ... PASSED
 bash install.sh --check → clean
 ```
 
-## Hardware verified (if it touches hardware — otherwise delete this)
+## Hardware + distros verified (if it touches either — otherwise delete this)
 
 - device/distro tested on:
+- other distros tried (arch? fedora? VM counts — say which):
 - what you did live:
 
 ## Checklist
