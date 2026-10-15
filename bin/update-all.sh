@@ -8,14 +8,18 @@ mkdir -p "$(dirname "$LOG")"
 
 # flags: --require-snapshot aborts the system upgrade unless snapshots work.
 # May appear anywhere in argv; the rest keeps positional meaning.
+# Array (not string concat): keeps arguments with spaces/globs intact.
 REQUIRE_SNAP=0
-POSARGS=""
+POSARGS=()
 for _a in "$@"; do
   if [ "$_a" = "--require-snapshot" ]; then REQUIRE_SNAP=1
-  else POSARGS="$POSARGS$_a "; fi
+  else POSARGS+=("$_a"); fi
 done
-# shellcheck disable=SC2086
-set -- $POSARGS
+if [ "${#POSARGS[@]}" -gt 0 ]; then
+  set -- "${POSARGS[@]}"
+else
+  set --
+fi
 
 notify() {
   local summary="$1"; local body="${2:-}"; local urgency="${3:-normal}"; local icon="${4:-software-update-available}"

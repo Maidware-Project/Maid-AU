@@ -32,11 +32,13 @@ say()  { echo "==> $*"; }
 warn() { echo "!! $*" >&2; }
 
 if [ "$UNINST" = "1" ]; then
-  rm -f "$HOME"/.local/bin/update-all.sh "$HOME"/.local/bin/system-updater \
-    "$HOME"/.local/bin/pm-zypper.sh "$HOME"/.local/bin/pm-dnf.sh \
-    "$HOME"/.local/bin/pm-pacman.sh "$HOME"/.local/bin/pm-apt.sh \
-    "$HOME"/.local/bin/setup-controllers.sh "$HOME"/.local/bin/check-controllers.sh
-  rm -f "$HOME"/.local/share/applications/system-updater.desktop
+  # program files come out of the same dirs the install used, so
+  # --prefix/DESTDIR installs uninstall cleanly too.
+  rm -f "$BINDIR"/update-all.sh "$BINDIR"/system-updater \
+    "$BINDIR"/pm-zypper.sh "$BINDIR"/pm-dnf.sh \
+    "$BINDIR"/pm-pacman.sh "$BINDIR"/pm-apt.sh \
+    "$BINDIR"/setup-controllers.sh "$BINDIR"/check-controllers.sh
+  rm -f "$SHAREDIR"/applications/system-updater.desktop
   if [ "$PURGE" = "1" ]; then
     rm -f "$HOME"/.config/maidau-appimages.conf "$HOME"/.local/share/update-all.log
     say "uninstalled, settings and logs removed (--purge)"
@@ -105,41 +107,47 @@ else
 fi
 
 copy_one() {
-  local src="$1" dest="$2" rewrite="${3:-0}"
+  local src="$1" dest="$2" rewrite="${3:-0}" tmp=""
   if [ "$CHECK" = "1" ]; then echo "COPY $dest"; return 0; fi
   mkdir -p "$(dirname "$dest")"
-  if [ -e "$dest" ] && ! cmp -s "$src" "$dest"; then
+  # render first, compare second: $src still holds the /home/EXAMPLEUSER/
+  # placeholder, which never equals an installed file — comparing raw
+  # would back up on every run. compare what we would write instead.
+  tmp="$(mktemp)" || return 1
+  if [ "$rewrite" = "1" ]; then
+    # escape & (sed replacement metachar) in $HOME
+    sed -e "s|/home/EXAMPLEUSER/|${HOME//&/\\&}|g" "$src" > "$tmp"
+  else
+    cp -a "$src" "$tmp"
+  fi
+  if [ -e "$dest" ] && ! cmp -s "$tmp" "$dest"; then
     cp -a "$dest" "${dest}.bak-${BACKUP_TS}"
     say "backed up $dest"
   fi
-  if [ "$rewrite" = "1" ]; then
-    # escape & (sed replacement metachar) in $HOME
-    sed -e "s|/home/EXAMPLEUSER/|${HOME//&/\\&}|g" "$src" > "$dest"
-  else
-    cp -a "$src" "$dest"
-  fi
+  cat "$tmp" > "$dest"
+  rm -f "$tmp"
   echo "installed $dest"
 }
 
 for f in "$PKGDIR"/bin/*; do
   [ -f "$f" ] || continue
-  copy_one "$f" "$HOME/.local/bin/$(basename "$f")"
+  copy_one "$f" "$BINDIR/$(basename "$f")"
 done
-[ "$CHECK" = "0" ] && chmod +x "$HOME"/.local/bin/update-all.sh "$HOME"/.local/bin/system-updater 2>/dev/null || true
+[ "$CHECK" = "0" ] && chmod +x "$BINDIR"/update-all.sh "$BINDIR"/system-updater 2>/dev/null || true
 
 if [ "$PM" = "zypper" ]; then
   for f in "$PKGDIR"/controllers/*; do
     [ -f "$f" ] || continue
-    copy_one "$f" "$HOME/.local/bin/$(basename "$f")"
+    copy_one "$f" "$BINDIR/$(basename "$f")"
   done
-  [ "$CHECK" = "0" ] && chmod +x "$HOME"/.local/bin/setup-controllers.sh "$HOME"/.local/bin/check-controllers.sh 2>/dev/null || true
+  [ "$CHECK" = "0" ] && chmod +x "$BINDIR"/setup-controllers.sh "$BINDIR"/check-controllers.sh 2>/dev/null || true
 else
   say "controllers/ skipped (openSUSE-only KMP stack; see README for $PM)"
 fi
 
 for f in "$PKGDIR"/desktop/*.desktop; do
   [ -f "$f" ] || continue
-  copy_one "$f" "$HOME/.local/share/applications/$(basename "$f")" 1
+  copy_one "$f" "$SHAREDIR/applications/$(basename "$f")" 1
 done
 
 if [ "$CHECK" = "1" ]; then say "(check only, nothing changed)"; exit 0; fi
