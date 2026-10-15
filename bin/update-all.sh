@@ -403,9 +403,9 @@ appimage_links() {
 
 # ---- maid suite: the updater knows about its own family ----
 # Only Maid-family repos are tracked here: Maid BT, Maidshare,
-# maid-watcher and Maid Helper. The Nuclear plugin and the Atrim
-# launcher are separate projects with their own releases - never
-# touch them from here.
+# maid-watcher, Maid Helper and Maid Runner. The Nuclear plugin and
+# the Atrim launcher are separate projects with their own releases -
+# never touch them from here.
 # Opt out with
 # MAID_SUITE=0. Pulls are --ff-only (diverged trees are left alone and
 # reported); deploying still means rerunning each install.sh.
@@ -413,7 +413,7 @@ maid_repos() {
   local base name
   for base in "$HOME/Documents/GitHub" "$HOME/GitHub" "$HOME/Projects" \
              "$HOME/src" "$HOME/code"; do
-    for name in "Maid BT" Maidshare maid-watcher "Maid Helper"; do
+    for name in "Maid BT" Maidshare maid-watcher "Maid Helper" "Maid Runner"; do
       [ -d "$base/$name/.git" ] && echo "$base/$name"
     done
   done
@@ -448,7 +448,7 @@ maidsuite_update() {
     say "maid suite: disabled (MAID_SUITE=0) — skipping."
     log "maid suite: skipped (MAID_SUITE=0)."; return 0
   fi
-  say "maid suite: enabled — pulling Maid BT, Maidshare, watcher, Helper."
+  say "maid suite: enabled — pulling Maid BT, Maidshare, watcher, Helper, Runner."
   local d changed=0 behind
   while IFS= read -r d; do
     [ -n "$d" ] || continue

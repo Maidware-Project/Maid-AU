@@ -142,7 +142,7 @@ bash install.sh --uninstall --purge    # everything out including those, no ques
 packaged installs (`--prefix=/usr`, e.g. the AUR package) uninstall
 from the same prefix — `pacman -R` also works there as usual.
 
-## the Maid suite (BT, Maidshare, watcher, Helper)
+## the Maid suite (BT, Maidshare, watcher, Helper, Runner)
 
 Maid AU knows its own family: `--check` reports when your Maid checkouts
 are behind upstream, a full run pulls them `--ff-only`, and
