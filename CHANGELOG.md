@@ -28,7 +28,7 @@
 ## maid suite awareness
 
 - the updater knows its own family (Maid BT, Maidshare, watcher,
-  Maid Helper): `--check` reports behind checkouts,
+  Maid Helper, Maid Runner): `--check` reports behind checkouts,
   full runs pull `--ff-only`, diverged trees are left alone and flagged.
   `UPDATE_MAID_DEPLOY=1` also reruns each installer; default only pulls
   code and tells you to deploy. `MAID_SUITE=0` opts out entirely.
