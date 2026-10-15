@@ -165,6 +165,6 @@ case "$PM" in
   *) BIN="" ;;
 esac
 if [ -n "$BIN" ]; then
-  say "  echo \"\$USER ALL=(ALL) NOPASSWD: $BIN\" > /tmp/su-updater"
-  say "  sudo visudo -c -q -f /tmp/su-updater && sudo install -m 0440 /tmp/su-updater /etc/sudoers.d/system-updater"
+  say "  T=\$(mktemp) && echo \"\$USER ALL=(ALL) NOPASSWD: $BIN\" > \$T"
+  say "  sudo visudo -c -q -f \$T && sudo install -m 0440 \$T /etc/sudoers.d/system-updater && rm -f \$T"
 fi
