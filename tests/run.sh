@@ -135,6 +135,23 @@ ok "appimage update (tool + link + backup)"
 HOME=/tmp/maidau-t UPDATE_PM=pacman bash "$PKGDIR/bin/update-all.sh" < /dev/null >/dev/null 2>&1 || fail "rerun crashed"
 grep -q "unchanged, skipped." /tmp/maidau-t/.local/share/update-all.log || fail "second run re-downloaded"
 ok "appimage links idempotent via etag cache"
+# integrity: https-only, pinned hash enforced, malformed refused
+fresh_home
+export NOTIFY_LOG=/tmp/maidau-t/notify.log
+mkdir -p /tmp/maidau-t/AppImages /tmp/maidau-t/.config
+goodsha=$(printf 'fake-new-binary\n' | sha256sum | awk '{print $1}')
+printf 'PinOk|https://example.com/ok.AppImage|%s\nPinBad|https://example.com/bad.AppImage|0000000000000000000000000000000000000000000000000000000000000000\nPlain|http://example.com/x.AppImage\nPinMal|https://example.com/m.AppImage|zzz\n' "$goodsha" > /tmp/maidau-t/.config/maidau-appimages.conf
+HOME=/tmp/maidau-t UPDATE_PM=pacman bash "$PKGDIR/bin/update-all.sh" < /dev/null >/dev/null 2>&1 || fail "integrity run crashed"
+grep -q "appimage link: PinOk.AppImage: downloaded." /tmp/maidau-t/.local/share/update-all.log || fail "pinned-good not installed"
+[ -x /tmp/maidau-t/AppImages/PinOk.AppImage ] || fail "pinned-good not executable"
+grep -q "PinBad.AppImage: HASH MISMATCH" /tmp/maidau-t/.local/share/update-all.log || fail "hash mismatch not logged"
+[ -e /tmp/maidau-t/AppImages/PinBad.AppImage ] && fail "bad-hash file installed!"
+grep -q "Plain: refused (not https)" /tmp/maidau-t/.local/share/update-all.log || fail "http not refused"
+[ -e /tmp/maidau-t/AppImages/x.AppImage ] && fail "plaintext file installed!"
+grep -q "PinMal: bad pinned hash" /tmp/maidau-t/.local/share/update-all.log || fail "malformed pin not rejected"
+[ -e /tmp/maidau-t/AppImages/m.AppImage ] && fail "malformed-pin file installed!"
+ok "appimage integrity: https-only, hash enforced"
+rm -rf /tmp/maidau-t
 
 echo "== maid suite =="
 fresh_home

@@ -1,5 +1,13 @@
 # changelog
 
+## appimage integrity
+
+- direct links (`Name|URL`) fetch https-only now (plaintext refused,
+  redirects can't downgrade via `--proto '=https'`); optional third
+  field pins the expected SHA-256 (`Name|URL|SHA256`), verified before
+  anything is replaced — mismatch or malformed pin leaves the old
+  file alone and marks the run partial.
+
 ## installer + updater fixes
 
 - backups only on real change: the compare now runs against the
