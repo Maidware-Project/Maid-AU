@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Backend: Arch Linux (pacman). Sourced by update-all.sh — not run directly.
+# Backend: Arch Linux (pacman). Sourced by update-all.sh - not run directly.
 # Provides: pm_name, pm_check, pm_update. Uses $SUDO, $TMP, log(), UPDATED.
 # AUR helper (yay/paru) used read-only for counting when present.
 PM_PROBE="pacman --version"

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Universal installer: Arch (pacman), Debian/Ubuntu (apt), Fedora (dnf),
-# openSUSE (zypper). Copies files (no symlinks — survives folder moves).
+# openSUSE (zypper). Copies files (no symlinks - survives folder moves).
 # Usage: ./install.sh [--check] [--no-packages] [--uninstall [--purge]]
 #          [--prefix=DIR] [--no-config]
 # --prefix installs program files elsewhere (packaging: DESTDIR supported);
@@ -89,18 +89,18 @@ elif [ "$NO_PKGS" = "0" ]; then
     apt) REQ=(flatpak fwupd libnotify-bin) ;;
     dnf) REQ=(flatpak fwupd libnotify) ;;
     zypper) REQ=(flatpak fwupd libnotify-tools) ;;
-    *) warn "unsupported distro — install manually: flatpak fwupd libnotify-client"; REQ=() ;;
+    *) warn "unsupported distro - install manually: flatpak fwupd libnotify-client"; REQ=() ;;
   esac
   if [ "${#REQ[@]}" -gt 0 ]; then
     say "installing: ${REQ[*]}"
     case "$PM" in
-      # NOTE: full -Syu, never -Sy alone — Arch does not support partial
+      # NOTE: full -Syu, never -Sy alone - Arch does not support partial
       # upgrades (refreshed db + old packages breaks).
       pacman) sudo pacman -Syu --needed --noconfirm "${REQ[@]}" ;;
       apt) sudo apt-get update && sudo apt-get install -y "${REQ[@]}" ;;
       dnf) sudo dnf install -y "${REQ[@]}" ;;
       zypper) sudo zypper --non-interactive install "${REQ[@]}" ;;
-    esac || warn "package install had errors — continuing (see README)"
+    esac || warn "package install had errors - continuing (see README)"
   fi
 else
   say "skipping packages (--no-packages)"
@@ -111,7 +111,7 @@ copy_one() {
   if [ "$CHECK" = "1" ]; then echo "COPY $dest"; return 0; fi
   mkdir -p "$(dirname "$dest")"
   # render first, compare second: $src still holds the Exec-path
-  # placeholder, which never equals an installed file — comparing raw
+  # placeholder, which never equals an installed file - comparing raw
   # would back up on every run. compare what we would write instead.
   tmp="$(mktemp)" || return 1
   if [ "$rewrite" = "1" ]; then
