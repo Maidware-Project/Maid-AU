@@ -120,7 +120,7 @@ from the same prefix — `pacman -R` also works there as usual.
 
 MIT — see LICENSE.
 
-## the Maid suite (BT, Maidshare, watcher)
+## the Maid suite (BT, Maidshare, watcher, Helper)
 
 Maid AU knows its own family: `--check` reports when your Maid checkouts
 are behind upstream, a full run pulls them `--ff-only`, and
