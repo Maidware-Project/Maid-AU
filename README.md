@@ -3,6 +3,27 @@
 one click updates it all: system packages, flatpak apps, firmware.
 it tells you what changed, warns when a reboot is needed, and never
 reboots for you.
+
+## quick start
+
+```sh
+bash install.sh            # deps + copy + launcher
+update-all.sh --check      # see what would update, change nothing
+update-all.sh              # real run (snapshots first, sudo as needed)
+```
+
+## why not topgrade / Discover?
+
+topgrade updates *more kinds of things* (cargo, pip, editors) on more
+platforms. Maid AU updates your *system* with guardrails topgrade
+doesn't do: snapshots before and after every run, honest PARTIAL
+states instead of pass/fail lies, a dry run showing everything, and
+Maid-suite awareness. Discover is click-and-pray; this one shows its
+work in `~/.local/share/update-all.log`.
+
+tested daily on openSUSE Tumbleweed; backends cover Arch,
+Debian/Ubuntu (incl. Mint), Fedora. stub-farm suite + CI green.
+
 ## layout
 
 ```
