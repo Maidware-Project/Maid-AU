@@ -1,6 +1,6 @@
 # review checklist
 
-run through these before a change ships.
+every change passes these five before it ships.
 
 1. plain words. could a non-technical friend follow the README diff with
    no help? no jargon without an explanation next to it.
