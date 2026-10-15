@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Something broke — tell it plainly, paste the diagnostics
+about: Something broke - tell it plainly, paste the diagnostics
 title: "[bug] "
 ---
 

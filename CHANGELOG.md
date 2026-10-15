@@ -11,7 +11,7 @@
 - direct links (`Name|URL`) fetch https-only now (plaintext refused,
   redirects can't downgrade via `--proto '=https'`); optional third
   field pins the expected SHA-256 (`Name|URL|SHA256`), verified before
-  anything is replaced — mismatch or malformed pin leaves the old
+  anything is replaced - mismatch or malformed pin leaves the old
   file alone and marks the run partial.
 
 ## installer + updater fixes
@@ -53,7 +53,7 @@
   `ZYPPER_NO_REFRESH`). was 3-4 metadata downloads per run.
 - fwupd skips its refresh when metadata is fresher than 24h
   (override: `FWUPD_CACHE`). still always checks for actual updates.
-- what still takes time is downloads + installs themselves — that part
+- what still takes time is downloads + installs themselves - that part
   is the distro's work, no script can skip it.
 
 ## snapshot honesty + failure policy

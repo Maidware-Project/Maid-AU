@@ -348,7 +348,7 @@ appimage_links() {
     # fail closed: plaintext URLs never fetch, malformed pins never install.
     case "$url" in
       https://*) : ;;
-      *) log "appimage link: $name: refused (not https) — left alone"; PARTIAL=1; continue ;;
+      *) log "appimage link: $name: refused (not https) - left alone"; PARTIAL=1; continue ;;
     esac
     pin=""
     if [ -n "${sha:-}" ]; then
@@ -356,7 +356,7 @@ appimage_links() {
       if [ -z "$hexonly" ] && [ "${#sha}" = "64" ]; then
         pin="$sha"
       else
-        log "appimage link: $name: bad pinned hash (want 64 hex chars) — left alone"
+        log "appimage link: $name: bad pinned hash (want 64 hex chars) - left alone"
         PARTIAL=1
         continue
       fi
@@ -379,7 +379,7 @@ appimage_links() {
         got=$(sha256sum "$tmp" 2>/dev/null | awk '{print $1}')
         if [ "$got" != "$pin" ]; then
           rm -f "$tmp"
-          log "appimage link: $(basename "$dest"): HASH MISMATCH (got ${got:-none}) — left alone"
+          log "appimage link: $(basename "$dest"): HASH MISMATCH (got ${got:-none}) - left alone"
           PARTIAL=1
           continue
         fi
@@ -445,10 +445,10 @@ maidsuite_check() {
 maidsuite_update() {
   echo "--- maid suite (own tools) ---"
   if [ "${MAID_SUITE:-1}" = "0" ]; then
-    say "maid suite: disabled (MAID_SUITE=0) — skipping."
+    say "maid suite: disabled (MAID_SUITE=0) - skipping."
     log "maid suite: skipped (MAID_SUITE=0)."; return 0
   fi
-  say "maid suite: enabled — pulling Maid BT, Maidshare, watcher, Helper, Runner."
+  say "maid suite: enabled - pulling Maid BT, Maidshare, watcher, Helper, Runner."
   local d changed=0 behind
   while IFS= read -r d; do
     [ -n "$d" ] || continue
@@ -459,7 +459,7 @@ maidsuite_update() {
       changed=1
       maidsuite_deploy "$d"
     else
-      log "maid suite: $(basename "$d"): needs attention (diverged?) — left alone."
+      log "maid suite: $(basename "$d"): needs attention (diverged?) - left alone."
       PARTIAL=1
     fi
   done < <(maid_repos)
@@ -477,7 +477,7 @@ maidsuite_deploy() {
     return 0
   }
   [ -x "$d/install.sh" ] || {
-    log "maid suite: $(basename "$d"): no installer — deploy manually."
+    log "maid suite: $(basename "$d"): no installer - deploy manually."
     return 0
   }
   if ( cd "$d" && bash install.sh --no-packages </dev/null >/dev/null 2>&1 ); then
@@ -485,7 +485,7 @@ maidsuite_deploy() {
   elif ( cd "$d" && bash install.sh </dev/null >/dev/null 2>&1 ); then
     log "maid suite: $(basename "$d"): redeployed."
   else
-    log "maid suite: $(basename "$d"): redeploy FAILED — run its install.sh by hand."
+    log "maid suite: $(basename "$d"): redeploy FAILED - run its install.sh by hand."
     PARTIAL=1
   fi
   return 0
@@ -597,9 +597,9 @@ if [ "${1:-}" = "--check" ]; then
   CTRL_N=${CTRL_N:-0}; FLAT_N=${FLAT_N:-0}; FW_N=${FW_N:-0}; APPIMG_N=${APPIMG_N:-0}
   MAID_N=$(maidsuite_check)
   if [ "${MAID_SUITE:-1}" = "0" ]; then
-    say "maid suite: disabled (MAID_SUITE=0) — not checked, not updated."
+    say "maid suite: disabled (MAID_SUITE=0) - not checked, not updated."
   elif [ "$MAID_N" -gt 0 ]; then
-    say "maid suite: $MAID_N repo(s) behind — run the updater to pull them."
+    say "maid suite: $MAID_N repo(s) behind - run the updater to pull them."
   else
     say "maid suite: up to date."
   fi

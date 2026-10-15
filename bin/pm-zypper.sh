@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Backend: openSUSE (zypper). Sourced by update-all.sh — not run directly.
+# Backend: openSUSE (zypper). Sourced by update-all.sh - not run directly.
 # Provides: pm_name, pm_check, pm_update. Uses $SUDO, $TMP, log(), UPDATED.
 PM_PROBE="zypper --version"
 pm_name() { echo "zypper"; }
@@ -63,7 +63,7 @@ pm_update() {
   echo "--- zypper dup (rpm packages) ---"
   # NOTE: --allow-vendor-change is required on Tumbleweed, not a shortcut:
   # without it dup stalls on vendor flips (Packman codec switches, repo
-  # moves). Scoped to this explicit, user-invoked full upgrade — the
+  # moves). Scoped to this explicit, user-invoked full upgrade - the
   # scripts never auto-update in the background.
   if $SUDO zypper --non-interactive dist-upgrade --no-confirm --allow-vendor-change >"$TMP" 2>&1; then
     cat "$TMP"

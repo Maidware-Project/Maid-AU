@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Backend: Fedora/RHEL (dnf). Sourced by update-all.sh — not run directly.
+# Backend: Fedora/RHEL (dnf). Sourced by update-all.sh - not run directly.
 # Provides: pm_name, pm_check, pm_update. Uses $SUDO, $TMP, log(), UPDATED.
 # Note: `dnf check-update` exits 100 when updates exist (not a failure).
 PM_PROBE="dnf --version"

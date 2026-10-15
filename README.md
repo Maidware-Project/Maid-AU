@@ -1,4 +1,4 @@
-# Maid AU — one updater for everything on linux
+# Maid AU - one updater for everything on linux
 
 category: system updates
 
@@ -35,7 +35,7 @@ bin/pm-dnf.sh         backend: Fedora/RHEL (upgrade + RPM Fusion count)
 bin/pm-pacman.sh      backend: Arch (Syu + optional AUR via yay/paru)
 bin/pm-apt.sh         backend: Debian/Ubuntu (all repos incl. PPAs)
 bin/system-updater    GUI entry: sleep-inhibited terminal picker
-controllers/          openSUSE-only controller stack (KMPs — see below)
+controllers/          openSUSE-only controller stack (KMPs - see below)
 desktop/              launcher icon
 install.sh            multi-distro installer
 ```
@@ -49,7 +49,7 @@ backend auto-detected from `/etc/os-release`, override with
 |---|---|---|---|---|
 | flatpak/fwupd/notify | flatpak fwupd libnotify (+pacman-contrib for `checkupdates`) | flatpak fwupd libnotify-bin | flatpak fwupd libnotify | flatpak fwupd libnotify-tools |
 
-no services here — everything runs on demand when you click it, so init
+no services here - everything runs on demand when you click it, so init
 doesn't matter. fork it for whatever setup you run.
 
 ## installation
@@ -60,28 +60,28 @@ bash install.sh --check    # dry run
 ```
 
 existing files are backed up to `*.bak-<timestamp>` (only when content
-actually changed — reinstalls don't pile up copies). passwordless runs
+actually changed - reinstalls don't pile up copies). passwordless runs
 are opt-in and risky: a NOPASSWD package manager rule is effectively
 passwordless root for your user (it can install crafted local packages).
 default is asking for sudo, which is fine. to opt in anyway the installer
 prints a safe sequence (write temp file, `visudo -c -f` it first, install
-with mode 0440). no network downloads anywhere in this package — every
+with mode 0440). no network downloads anywhere in this package - every
 dependency comes from your distro repos.
 
 ## usage
 
 - launcher: **System Updater** (or run `system-updater` /
   `update-all.sh` in a terminal)
-- `update-all.sh --check` — dry run: shows what *would* update,
+- `update-all.sh --check` - dry run: shows what *would* update,
   split into apps vs system/firmware, changes nothing
-- `update-all.sh --last` — when the last successful run happened
+- `update-all.sh --last` - when the last successful run happened
 - AppImages in `~/AppImages` / `~/Applications` update via embedded
   info (`appimageupdatetool` when installed); extra direct links go in
   `~/.config/maidau-appimages.conf` as `Name|URL` (or `Name|URL|SHA256`
   to pin the hash) lines. downloads are https-only, a pinned hash is
   verified before replacing (mismatch = left alone), old file backed
   up first, only downloaded when changed
-- `update-all.sh --require-snapshot` — combine with a run: abort the
+- `update-all.sh --require-snapshot` - combine with a run: abort the
   system upgrade unless snapshots actually work (see safety)
 - Log: `~/.local/share/update-all.log` (last 1000 lines kept)
 
@@ -92,7 +92,7 @@ btrfs, timeshift otherwise) and tells you their numbers. bad update?
 roll back: `sudo snapper -c root rollback <pre#>` (or pick one in GRUB).
 
 two honest caveats: if snapshotting itself fails, the upgrade still
-goes ahead by default (it gets logged loudly) — pass
+goes ahead by default (it gets logged loudly) - pass
 `--require-snapshot` to make it abort instead. and kernels are never
 held back on purpose: an old kernel breaks drivers worse than any
 update does.
@@ -105,7 +105,7 @@ update does.
   one). a merely unhealthy controller *check* just gets logged.
 - a failed AUR build (only if you opted in with `UPDATE_AUR=1`) marks
   the run PARTIAL: system packages are done, one AUR package needs a
-  look — not a failure.
+  look - not a failure.
 - "reboot needed" is always just a hint, detected per-distro.
 
 ## game controllers
@@ -114,7 +114,7 @@ update does.
 on openSUSE it installs matching kernel modules, but only if you opt
 in: `UPDATE_CONTROLLERS=1 update-all.sh`. without it the updater says
 so up front and skips the whole thing. elsewhere it drives Maid
-Helper's gamepad doctor (`mod-gamepad.sh`) when installed — same
+Helper's gamepad doctor (`mod-gamepad.sh`) when installed - same
 opt-in, same reporting. without Helper:
 - **Arch**: community DKMS packages (`xone-dkms`, `xpadneo-dkms`) via
   your AUR helper; `joycond`/`inputplumber` from AUR/extra.
@@ -142,7 +142,7 @@ bash install.sh --uninstall --purge    # everything out including those, no ques
 ```
 
 packaged installs (`--prefix=/usr`, e.g. the AUR package) uninstall
-from the same prefix — `pacman -R` also works there as usual.
+from the same prefix - `pacman -R` also works there as usual.
 
 ## the Maid suite (BT, Maidshare, watcher, Helper, Runner)
 
@@ -153,4 +153,4 @@ Opt out anytime with `MAID_SUITE=0`.
 
 ## License
 
-MIT — see LICENSE. a Maidware Project, Forkable open source tools served to help
+MIT - see LICENSE. a Maidware Project, Forkable open source tools served to help
