@@ -40,18 +40,21 @@ if [ "$UNINST" = "1" ]; then
     "$BINDIR"/setup-controllers.sh "$BINDIR"/check-controllers.sh
   rm -f "$SHAREDIR"/applications/system-updater.desktop
   if [ "$PURGE" = "1" ]; then
-    rm -f "$HOME"/.config/maidau-appimages.conf "$HOME"/.local/share/update-all.log
-    say "uninstalled, settings and logs removed (--purge)"
+    rm -f "$HOME"/.config/maidau-appimages.conf "$HOME"/.local/share/update-all.log \
+      "$HOME"/.local/share/update-all.last "$HOME"/.local/share/maidau-appimages.state
+    say "uninstalled, settings, logs and state removed (--purge)"
   elif [ -t 0 ]; then
-    printf 'Remove settings and logs too (~/.config/maidau-appimages.conf, update log)? [y/N]: '
+    printf 'Remove settings, logs and state too (~/.config/maidau-appimages.conf,
+update log/last, appimage state)? [y/N]: '
     read -r _ans
     case "$_ans" in [Yy]*)
-      rm -f "$HOME"/.config/maidau-appimages.conf "$HOME"/.local/share/update-all.log
-      say "uninstalled, settings and logs removed" ;;
-    *) say "uninstalled, settings and logs kept" ;;
+      rm -f "$HOME"/.config/maidau-appimages.conf "$HOME"/.local/share/update-all.log \
+        "$HOME"/.local/share/update-all.last "$HOME"/.local/share/maidau-appimages.state
+      say "uninstalled, settings, logs and state removed" ;;
+    *) say "uninstalled, settings, logs and state kept" ;;
     esac
   else
-    say "uninstalled (kept: ~/.config/maidau-appimages.conf, update log; rerun with --purge to remove)"
+    say "uninstalled (kept: settings, logs and state; rerun with --purge to remove)"
   fi
   exit 0
 fi
@@ -117,11 +120,18 @@ copy_one() {
   if [ "$rewrite" = "1" ]; then
     # escape & (sed replacement metachar) in $HOME
     sed -e "s|/home/EXAMPLEUSER/|${HOME//&/\\&}|g" "$src" > "$tmp"
+  elif [ "$rewrite" = "2" ]; then
+    # system package: bare command names, resolved via PATH
+    sed -e "s|/home/EXAMPLEUSER/||g" -e "s|/.local/bin/||g" "$src" > "$tmp"
   else
     cp -a "$src" "$tmp"
   fi
   if [ -e "$dest" ] && ! cmp -s "$tmp" "$dest"; then
-    cp -a "$dest" "${dest}.bak-${BACKUP_TS}"
+    if ! cp -a "$dest" "${dest}.bak-${BACKUP_TS}"; then
+      warn "backup failed, not replacing $dest"
+      rm -f "$tmp"
+      return 1
+    fi
     say "backed up $dest"
   fi
   cat "$tmp" > "$dest"
@@ -129,16 +139,19 @@ copy_one() {
   echo "installed $dest"
 }
 
+FAIL=0
 for f in "$PKGDIR"/bin/*; do
   [ -f "$f" ] || continue
-  copy_one "$f" "$BINDIR/$(basename "$f")"
+  copy_one "$f" "$BINDIR/$(basename "$f")" \
+    || { warn "could not install $(basename "$f")"; FAIL=1; }
 done
 [ "$CHECK" = "0" ] && chmod +x "$BINDIR"/update-all.sh "$BINDIR"/system-updater 2>/dev/null || true
 
 if [ "$PM" = "zypper" ]; then
   for f in "$PKGDIR"/controllers/*; do
     [ -f "$f" ] || continue
-    copy_one "$f" "$BINDIR/$(basename "$f")"
+    copy_one "$f" "$BINDIR/$(basename "$f")" \
+      || { warn "could not install $(basename "$f")"; FAIL=1; }
   done
   [ "$CHECK" = "0" ] && chmod +x "$BINDIR"/setup-controllers.sh "$BINDIR"/check-controllers.sh 2>/dev/null || true
 else
@@ -147,10 +160,15 @@ fi
 
 for f in "$PKGDIR"/desktop/*.desktop; do
   [ -f "$f" ] || continue
-  copy_one "$f" "$SHAREDIR/applications/$(basename "$f")" 1
+  copy_one "$f" "$SHAREDIR/applications/$(basename "$f")" "$REWRITE" \
+    || { warn "could not install $(basename "$f")"; FAIL=1; }
 done
 
 if [ "$CHECK" = "1" ]; then say "(check only, nothing changed)"; exit 0; fi
+if [ "$FAIL" = "1" ]; then
+  warn "install incomplete: some files failed to install"
+  exit 1
+fi
 command -v kbuildsycoca6 >/dev/null 2>&1 && kbuildsycoca6 --noincremental >/dev/null 2>&1 || true
 
 say "done. Backups (if any): *.bak-${BACKUP_TS}"
