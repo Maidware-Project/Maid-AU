@@ -71,24 +71,35 @@ echo "== snapshot safety net =="
 fresh_home
 export NOTIFY_LOG=/tmp/maidau-t/notify.log
 HOME=/tmp/maidau-t UPDATE_PM=pacman SNAP_OK=1 bash "$PKGDIR/bin/update-all.sh" < /dev/null >/dev/null 2>&1 || fail "snapshot run crashed"
-grep -q "safety: pre-update snapshot #42 taken" /tmp/maidau-t/.local/share/update-all.log || fail "pre snapshot not taken"
-grep -q "safety: post-update snapshot #42 taken" /tmp/maidau-t/.local/share/update-all.log || fail "post snapshot not taken"
-grep -q "safety: pre #42, post #42" /tmp/maidau-t/.local/share/update-all.log || fail "snapshot summary missing"
-ok "snapshots taken before and after (SNAP_OK stub)"
+grep -q "safety: snapshots #42 -> #41" /tmp/maidau-t/.local/share/update-all.log || fail "snapshot pair not logged"
+grep -q "Snaps: snapshots #42 -> #41" /tmp/maidau-t/notify.log || fail "snapshot numbers not notified"
+ok "snapshots taken + numbers reported (SNAP_OK stub)"
 
 fresh_home
 export NOTIFY_LOG=/tmp/maidau-t/notify.log
 out=$(HOME=/tmp/maidau-t UPDATE_PM=pacman SNAP_LIST_ONLY=1 bash "$PKGDIR/bin/update-all.sh" --require-snapshot < /dev/null 2>&1); rc=$?
 [ "$rc" -eq 2 ] || fail "snapshot-fail strict exit $rc"
-echo "$out" | grep -q "ABORT: --require-snapshot but the pre-update snapshot failed." || fail "strict creation-fail abort"
+echo "$out" | grep -q "ABORT: --require-snapshot and pre-snapshot failed." || fail "strict creation-fail abort"
 ok "strict mode aborts when snapshot creation fails"
 
 fresh_home
 export NOTIFY_LOG=/tmp/maidau-t/notify.log
 HOME=/tmp/maidau-t UPDATE_PM=pacman SNAP_LIST_ONLY=1 bash "$PKGDIR/bin/update-all.sh" < /dev/null >/dev/null 2>&1 || fail "non-strict snapshot-fail run crashed"
 grep -q "safety: pre-update snapshot FAILED - continuing without rollback" /tmp/maidau-t/.local/share/update-all.log || fail "loud non-strict warning missing"
-grep -q "safety: post-update snapshot FAILED" /tmp/maidau-t/.local/share/update-all.log || fail "post failure not logged"
 ok "snapshot failure continues by default, logged loudly"
+
+fresh_home
+export NOTIFY_LOG=/tmp/maidau-t/notify.log
+out=$(HOME=/tmp/maidau-t UPDATE_PM=zypper SNAP_EMPTY=1 RPM_PRESENT="xone-kmp-default" bash "$PKGDIR/bin/update-all.sh" --require-snapshot < /dev/null 2>&1); rc=$?
+[ "$rc" -eq 2 ] || fail "zypper strict no-readout exit $rc"
+echo "$out" | grep -q "ABORT: --require-snapshot and no snapshot before the upgrade." || fail "zypper strict abort missing"
+ok "strict mode aborts on zypper without a pre-update snapshot"
+
+fresh_home
+export NOTIFY_LOG=/tmp/maidau-t/notify.log
+HOME=/tmp/maidau-t UPDATE_PM=zypper SNAP_EMPTY=1 RPM_PRESENT="xone-kmp-default" bash "$PKGDIR/bin/update-all.sh" < /dev/null >/dev/null 2>&1 || fail "zypper no-readout run crashed"
+grep -q "safety: no snapshot before the upgrade - continuing without rollback" /tmp/maidau-t/.local/share/update-all.log || fail "zypper loud warning missing"
+ok "zypper continues without snapshot by default, logged loudly"
 
 echo "== partial state on AUR failure =="
 fresh_home

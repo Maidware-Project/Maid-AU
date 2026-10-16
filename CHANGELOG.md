@@ -1,15 +1,15 @@
 # changelog
 
-## snapshot safety net wired up
+## snapshot honesty + maid suite visibility
 
-- the pre/post snapshots the README always promised are now actually
-  taken: pre before any package change, post right after the package
-  phase; their numbers land in the log and the finish notification. a
-  failed snapshot aborts only with `--require-snapshot`; otherwise it
-  is said loudly and the run continues, as documented.
-- maid suite pulls now list the incoming commits and changed files in
-  the log, and `UPDATE_MAID_DEPLOY=1` states it is rerunning installers
-  on exactly those commits.
+- a failed pre-update snapshot is now said loudly (console + log) on
+  pacman, dnf and apt instead of continuing silently, and zypper got
+  the strict `--require-snapshot` check the others already had: no
+  snapshot before the upgrade now aborts when the flag is set, and
+  says so loudly when it is not.
+- maid suite pulls list the incoming commits and changed files in the
+  log, and `UPDATE_MAID_DEPLOY=1` states it is rerunning installers on
+  exactly those commits.
 
 ## controllers via helper off-suse
 
