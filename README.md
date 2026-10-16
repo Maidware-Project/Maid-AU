@@ -1,10 +1,6 @@
-# Maid AU - one updater for everything on linux
+# maid au - one updater for everything on linux
 
-category: system updates
-
-one click updates it all: system packages, flatpak apps, firmware.
-it tells you what changed, warns when a reboot is needed, and never
-reboots for you.
+command-line helper. updates system packages, flatpak apps, and firmware in one run. tells you what changed, warns when a reboot is needed, and never reboots for you. can preview with <code>--check</code>.
 
 ## quick start
 
