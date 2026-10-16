@@ -13,9 +13,6 @@ Project.
 - sign off every commit (`git commit -s` appends it):
   `Signed-off-by: Your Name <you@example.com>` - the developer's
   certificate of origin, your word that you may contribute it
-- AI-assisted work gets an `Assisted-by:` trailer naming the tool, e.g.
-  `Assisted-by: opencode (muse-spark)`. the kernel requires it; so do we.
-  never claim a run you didn't do.
 - bug fixes name what they fix: `Fixes: #123` or `Closes: #123`
 
 ## before opening anything

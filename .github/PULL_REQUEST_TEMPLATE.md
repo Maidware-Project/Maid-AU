@@ -22,4 +22,3 @@ bash install.sh --check → clean
 - [ ] no personal data (MACs, names, IPs, home paths)
 - [ ] docs updated with the behavior (README/CHANGELOG)
 - [ ] commits signed off (`git commit -s`)
-- [ ] AI-assisted? name the tool here + `Assisted-by:` trailer in the commits
