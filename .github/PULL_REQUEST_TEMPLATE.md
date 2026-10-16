@@ -18,6 +18,7 @@ bash install.sh --check → clean
 - [ ] one thing per PR, small enough to review without an assistant
 - [ ] I understand every line of this change (AI-assisted parts included)
 - [ ] `bash tests/run.sh` green on my machine (see above)
+- [ ] CI green on this PR (a local green run is the start, not the finish)
 - [ ] no personal data (MACs, names, IPs, home paths)
 - [ ] docs updated with the behavior (README/CHANGELOG)
 - [ ] commits signed off (`git commit -s`)

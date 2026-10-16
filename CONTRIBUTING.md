@@ -26,6 +26,8 @@ Project.
   snapshots, PARTIAL on an AUR failure, appimage hash pinning, and the
   maid suite handoff.
 - `bash install.sh --check` writes nothing
+- CI must be green before review - a green run on your machine is the
+  start, not the finish
 - changed anything that removes or replaces files? say how you tested the
   rollback, not just the happy path
 - no personal data anywhere (MACs, names, IPs, home paths). the suite
@@ -40,6 +42,10 @@ explain.
 you need basic linux: the terminal, permissions, sudo, `~/.config`, and a
 feel for what a package manager really does. guessing here has real
 consequences, so it isn't contributing.
+
+reviewers here are people, not bots: expect to answer questions about your
+patch, and don't open one you can't back up. unattended drive-by or bot
+PRs get closed.
 
 ## issues
 
