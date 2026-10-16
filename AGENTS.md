@@ -29,8 +29,7 @@ Lowercase terse voice in docs (README, messages, notifications).
   technical scope, no politics, stay neutral.
 - Commits: short lowercase summaries with a prefix (`fix:`, `feat:`, `docs:`,
   `tests:`, `chore:`), one logical change each. Sign off every commit
-  (`git commit -s`); AI-assisted work adds an `Assisted-by:` trailer
-  naming the tool. Bug fixes cite `Fixes: #N`.
+  (`git commit -s`). Bug fixes cite `Fixes: #N`.
 - Destructive actions stay opt-in (`UPDATE_AUR`, `UPDATE_CONTROLLERS`,
   passwordless sudo). `--check` reports, changes nothing.
 - Never hold packages; snapshots before upgrades (documented honestly).
