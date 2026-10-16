@@ -16,6 +16,10 @@
 
 set -o pipefail
 MODE="${1:-}"
+case "$MODE" in
+  ""|--update) ;;
+  *) echo "unknown option: $MODE" >&2; exit 2 ;;
+esac
 if [ "$MODE" = "--update" ]; then
   SUDO="sudo -n"
 else
@@ -23,6 +27,7 @@ else
 fi
 
 LOG="$HOME/.local/share/update-all.log"
+mkdir -p "$(dirname "$LOG")" 2>/dev/null || true
 log() { echo "$*" >> "$LOG"; }
 
 # Tumbleweed native equivalents of Bazzite akmods + userspace.
