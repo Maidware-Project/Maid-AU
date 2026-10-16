@@ -111,20 +111,12 @@ snap_pre() {
   fi
 }
 snap_post() {
-  # $1 label -> same contract as snap_pre
+  # $1 label
   if $SUDO snapper -c root list >/dev/null 2>&1; then
-    $SUDO snapper -c root create --description "maidau-post: $1" --print-number 2>/dev/null || true
+    $SUDO snapper -c root create --description "maidau-post: $1" >/dev/null 2>&1 || true
   elif command -v timeshift >/dev/null 2>&1 && [ "$(findmnt -n -o FSTYPE / 2>/dev/null)" = "btrfs" ]; then
-    $SUDO timeshift --create --comments "maidau-post: $1" >/dev/null 2>&1 && echo "timeshift" || true
+    $SUDO timeshift --create --comments "maidau-post: $1" >/dev/null 2>&1 || true
   fi
-}
-snap_desc() {
-  # "" | id | timeshift -> human tag for messages
-  case "${1:-}" in
-    "") echo "" ;;
-    timeshift) echo "timeshift" ;;
-    *) echo "#$1" ;;
-  esac
 }
 snap_has_tools() {
   # strict-mode preflight: snapshot tooling exists (no snapshot taken)
@@ -679,22 +671,6 @@ if [ "$REQUIRE_SNAP" = "1" ] && ! snap_has_tools; then
   wait "$FLPID" 2>/dev/null || true
   exit 2
 fi
-# safety net: the README promises a snapshot around every run. take the
-# pre-update one now; a failed snapshot only aborts with --require-snapshot.
-PRE_SNAP=$(snap_pre "system")
-PRE_DESC=$(snap_desc "$PRE_SNAP")
-if [ -z "$PRE_SNAP" ]; then
-  if [ "$REQUIRE_SNAP" = "1" ]; then
-    say "ABORT: --require-snapshot but the pre-update snapshot failed."
-    notify "Update aborted" "Pre-update snapshot failed (--require-snapshot)." critical dialog-error
-    wait "$FLPID" 2>/dev/null || true
-    exit 2
-  fi
-  say "safety: pre-update snapshot FAILED - continuing without rollback (--require-snapshot makes this fatal)."
-else
-  SNAP_INFO="pre $PRE_DESC"
-  say "safety: pre-update snapshot $PRE_DESC taken (rollback point)."
-fi
 # metadata was just refreshed above: later zypper installs in this run
 # skip re-downloading it (setup-controllers honors this env var)
 export ZYPPER_NO_REFRESH=1
@@ -705,15 +681,6 @@ cat "$FLATF" 2>/dev/null
 if [ -f "$FLATRF" ]; then . "$FLATRF"; else FAILED=1; log "flatpak: result lost"; fi
 [ "${BG_UPDATED:-0}" = "1" ] && UPDATED=1
 [ "${BG_FAILED:-0}" = "1" ] && FAILED=1
-# post snapshot: same honesty rules as the pre one (say what happened)
-POST_SNAP=$(snap_post "system")
-POST_DESC=$(snap_desc "$POST_SNAP")
-if [ -n "$POST_SNAP" ]; then
-  SNAP_INFO="${SNAP_INFO:+$SNAP_INFO, }post $POST_DESC"
-  say "safety: post-update snapshot $POST_DESC taken."
-else
-  say "safety: post-update snapshot FAILED."
-fi
 controllers_hook update
 appimage_update
 maidsuite_update
