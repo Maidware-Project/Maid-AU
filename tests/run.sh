@@ -67,6 +67,29 @@ out=$(HOME=/tmp/maidau-t UPDATE_PM=dnf DNF_RC=100 bash "$PKGDIR/bin/update-all.s
 echo "$out" | grep -q "ABORT" || fail "strict abort message"
 ok "strict mode aborts with no snapshot tooling"
 
+echo "== snapshot safety net =="
+fresh_home
+export NOTIFY_LOG=/tmp/maidau-t/notify.log
+HOME=/tmp/maidau-t UPDATE_PM=pacman SNAP_OK=1 bash "$PKGDIR/bin/update-all.sh" < /dev/null >/dev/null 2>&1 || fail "snapshot run crashed"
+grep -q "safety: pre-update snapshot #42 taken" /tmp/maidau-t/.local/share/update-all.log || fail "pre snapshot not taken"
+grep -q "safety: post-update snapshot #42 taken" /tmp/maidau-t/.local/share/update-all.log || fail "post snapshot not taken"
+grep -q "safety: pre #42, post #42" /tmp/maidau-t/.local/share/update-all.log || fail "snapshot summary missing"
+ok "snapshots taken before and after (SNAP_OK stub)"
+
+fresh_home
+export NOTIFY_LOG=/tmp/maidau-t/notify.log
+out=$(HOME=/tmp/maidau-t UPDATE_PM=pacman SNAP_LIST_ONLY=1 bash "$PKGDIR/bin/update-all.sh" --require-snapshot < /dev/null 2>&1); rc=$?
+[ "$rc" -eq 2 ] || fail "snapshot-fail strict exit $rc"
+echo "$out" | grep -q "ABORT: --require-snapshot but the pre-update snapshot failed." || fail "strict creation-fail abort"
+ok "strict mode aborts when snapshot creation fails"
+
+fresh_home
+export NOTIFY_LOG=/tmp/maidau-t/notify.log
+HOME=/tmp/maidau-t UPDATE_PM=pacman SNAP_LIST_ONLY=1 bash "$PKGDIR/bin/update-all.sh" < /dev/null >/dev/null 2>&1 || fail "non-strict snapshot-fail run crashed"
+grep -q "safety: pre-update snapshot FAILED - continuing without rollback" /tmp/maidau-t/.local/share/update-all.log || fail "loud non-strict warning missing"
+grep -q "safety: post-update snapshot FAILED" /tmp/maidau-t/.local/share/update-all.log || fail "post failure not logged"
+ok "snapshot failure continues by default, logged loudly"
+
 echo "== partial state on AUR failure =="
 fresh_home
 export NOTIFY_LOG=/tmp/maidau-t/notify.log
@@ -180,6 +203,9 @@ grep -q "skipped (MAID_SUITE=0)" /tmp/maidau-t/.local/share/update-all.log || fa
 ok "maid suite opt-out"
 HOME=/tmp/maidau-t UPDATE_PM=pacman UPDATE_MAID_DEPLOY=1 bash "$PKGDIR/bin/update-all.sh" < /dev/null >/dev/null 2>&1 || fail "deploy run crashed"
 grep -q "Maid BT.*updated (1)" /tmp/maidau-t/.local/share/update-all.log || fail "pull not logged"
+grep -q "maid suite:   [0-9a-f]* two" /tmp/maidau-t/.local/share/update-all.log || fail "incoming commit not shown"
+grep -q "maid suite:   files: " /tmp/maidau-t/.local/share/update-all.log || fail "changed files not shown"
+grep -q "UPDATE_MAID_DEPLOY=1 - rerunning install.sh" /tmp/maidau-t/.local/share/update-all.log || fail "deploy intent not logged"
 grep -q "Maid BT.*redeployed" /tmp/maidau-t/.local/share/update-all.log || fail "deploy not logged"
 grep -q "deployed" /tmp/maidau-t/maidau-deploy-marker || fail "fixture installer did not run"
 ok "maid suite pull + redeploy with UPDATE_MAID_DEPLOY=1"
