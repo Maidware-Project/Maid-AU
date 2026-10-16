@@ -1,4 +1,10 @@
 #!/bin/bash
-[ "${SNAP_OK:-0}" = "1" ] || exit 1
-case "$*" in *create*) echo "42";; *) echo "41";; esac
+# knobs: SNAP_OK=1 list+create succeed; SNAP_LIST_ONLY=1 list works, create fails
+case "$*" in
+  *list*) [ "${SNAP_OK:-0}" = "1" ] || [ "${SNAP_LIST_ONLY:-0}" = "1" ] || exit 1
+          echo 41 ;;
+  *create*) [ "${SNAP_OK:-0}" = "1" ] || exit 1
+            echo 42 ;;
+  *) exit 1 ;;
+esac
 exit 0

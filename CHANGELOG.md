@@ -1,5 +1,16 @@
 # changelog
 
+## snapshot safety net wired up
+
+- the pre/post snapshots the README always promised are now actually
+  taken: pre before any package change, post right after the package
+  phase; their numbers land in the log and the finish notification. a
+  failed snapshot aborts only with `--require-snapshot`; otherwise it
+  is said loudly and the run continues, as documented.
+- maid suite pulls now list the incoming commits and changed files in
+  the log, and `UPDATE_MAID_DEPLOY=1` states it is rerunning installers
+  on exactly those commits.
+
 ## controllers via helper off-suse
 
 - non-openSUSE distros drive Maid Helper's gamepad doctor when it is
