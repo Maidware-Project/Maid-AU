@@ -25,8 +25,10 @@ notify() {
   local summary="$1"; local body="${2:-}"; local urgency="${3:-normal}"; local icon="${4:-software-update-available}"
   if command -v notify-send >/dev/null 2>&1; then
     notify-send -a "System Updater" -u "$urgency" -i "$icon" "$summary" "$body"
-  else
+  elif command -v kdialog >/dev/null 2>&1; then
     kdialog --passivepopup "$summary $body" 5
+  else
+    echo "$summary $body"
   fi
 }
 
@@ -34,6 +36,11 @@ last_info() {
   if [ -f "$LASTFILE" ]; then
     local last_epoch now age age_h age_d last_date
     last_epoch=$(head -n1 "$LASTFILE" 2>/dev/null || echo 0)
+    case "$last_epoch" in ''|*[!0-9]*) last_epoch=0 ;; esac
+    if [ "$last_epoch" -eq 0 ]; then
+      echo "No record of previous successful update."
+      return 0
+    fi
     now=$(date +%s)
     age=$((now - last_epoch))
     age_h=$((age / 3600))
@@ -78,7 +85,7 @@ IMPORTANT=0
 PARTIAL=0
 SNAP_INFO=""
 TMP=$(mktemp)
-trap 'rm -f "$TMP"' EXIT
+trap 'rm -f "$TMP" "$TMP".*' EXIT
 
 log() { echo "$*" >> "$LOG"; }
 trim_log() {
@@ -286,20 +293,20 @@ appimage_dirs() {
 
 appimage_files() {
   local d
-  for d in $(appimage_dirs); do
+  while IFS= read -r d; do
     find "$d" -maxdepth 2 -type f -name "*.AppImage" 2>/dev/null
-  done
+  done < <(appimage_dirs)
 }
 
 appimage_check() {
   # echo count of managed AppImages (embedded info + configured links)
   local n=0 f
   if command -v appimageupdatetool >/dev/null 2>&1; then
-    for f in $(appimage_files); do
+    while IFS= read -r f; do
       if echo n | appimageupdatetool "$f" 2>&1 | grep -qiE "update (available|found)|new version|up to date|already"; then
         n=$((n+1))
       fi
-    done
+    done < <(appimage_files)
   fi
   if [ -f "$HOME/.config/maidau-appimages.conf" ]; then
     n=$((n + $(grep -vcE '^\s*(#|$)' "$HOME/.config/maidau-appimages.conf" || true)))
@@ -312,7 +319,7 @@ appimage_update() {
   echo "--- appimages ---"
   local f out changed=0
   if command -v appimageupdatetool >/dev/null 2>&1; then
-    for f in $(appimage_files); do
+    while IFS= read -r f; do
       out=$(yes 2>/dev/null | appimageupdatetool "$f" 2>&1 || true)
       if echo "$out" | grep -qiE "up to date|already|no update information"; then
         log "appimage: $(basename "$f"): nothing to do."
@@ -324,7 +331,7 @@ appimage_update() {
         echo "$out" | tail -n 5
         PARTIAL=1
       fi
-    done
+    done < <(appimage_files)
   else
     log "appimage: no appimageupdatetool (skipping embedded updates)."
   fi
@@ -361,7 +368,7 @@ appimage_links() {
         continue
       fi
     fi
-    dest=$(appimage_files | grep -m1 "/$(basename "$name" .AppImage)" || true)
+    dest=$(appimage_files | grep -F -m1 "/$(basename "$name" .AppImage)" || true)
     if [ -z "$dest" ]; then
       dest="$HOME/AppImages/$(basename "$name")"
       [ "${dest%.AppImage}" = "$dest" ] && dest="$dest.AppImage"
@@ -385,8 +392,11 @@ appimage_links() {
         fi
       fi
       mkdir -p "$(dirname "$dest")"
-      if [ -e "$dest" ]; then
-        cp -a "$dest" "${dest}.bak-$(date +%Y%m%d-%H%M%S)" 2>/dev/null || true
+      if [ -e "$dest" ] && ! cp -a "$dest" "${dest}.bak-$(date +%Y%m%d-%H%M%S)" 2>/dev/null; then
+        rm -f "$tmp"
+        log "appimage link: $(basename "$dest"): backup FAILED - left alone"
+        PARTIAL=1
+        continue
       fi
       mv "$tmp" "$dest" && chmod +x "$dest"
       log "appimage link: $(basename "$dest"): downloaded."
