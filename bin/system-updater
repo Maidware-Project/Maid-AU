@@ -2,6 +2,17 @@
 # Single-command GUI entry for System Updater: sleep-inhibited terminal + update-all.sh
 # Portable terminal choice: first available wins.
 BIN="$HOME/.local/bin/update-all.sh"
+if [ ! -x "$BIN" ]; then
+  echo "update-all.sh not found at $BIN - run install.sh first." >&2
+  exit 1
+fi
+# run under systemd-inhibit when available; exec directly otherwise
+run() {
+  if command -v systemd-inhibit >/dev/null 2>&1; then
+    exec systemd-inhibit --what=sleep --why="system update" "$@"
+  fi
+  exec "$@"
+}
 pick_term() {
   if command -v ghostty >/dev/null 2>&1; then echo "ghostty -e"; return; fi
   if command -v konsole >/dev/null 2>&1; then echo "konsole -e"; return; fi
@@ -12,7 +23,7 @@ pick_term() {
 }
 if [ -t 1 ]; then
   # already in a terminal: just run it
-  exec systemd-inhibit --what=sleep --why="system update" "$BIN" "$@"
+  run "$BIN" "$@"
 fi
 TERM_CMD=$(pick_term)
 if [ -z "$TERM_CMD" ]; then
@@ -20,4 +31,4 @@ if [ -z "$TERM_CMD" ]; then
   exit 1
 fi
 # shellcheck disable=SC2086
-exec systemd-inhibit --what=sleep --why="system update" $TERM_CMD "$BIN" "$@"
+run $TERM_CMD "$BIN" "$@"
