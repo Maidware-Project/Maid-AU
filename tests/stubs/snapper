@@ -1,10 +1,17 @@
 #!/bin/bash
-# knobs: SNAP_OK=1 list+create succeed; SNAP_LIST_ONLY=1 list works, create fails
+# knobs: SNAP_OK=1 list+create work; SNAP_LIST_ONLY=1 list works, create
+# fails; SNAP_EMPTY=1 list exits 0 but prints no number (empty readout)
 case "$*" in
-  *list*) [ "${SNAP_OK:-0}" = "1" ] || [ "${SNAP_LIST_ONLY:-0}" = "1" ] || exit 1
-          echo 41 ;;
-  *create*) [ "${SNAP_OK:-0}" = "1" ] || exit 1
-            echo 42 ;;
-  *) exit 1 ;;
+  *create*)
+    [ "${SNAP_OK:-0}" = "1" ] && { echo 42; exit 0; }
+    exit 1 ;;
+  *"--columns"*)
+    [ "${SNAP_EMPTY:-0}" = "1" ] && exit 0
+    [ "${SNAP_OK:-0}" = "1" ] || [ "${SNAP_LIST_ONLY:-0}" = "1" ] || exit 1
+    echo 41; exit 0 ;;
+  *list*)
+    [ "${SNAP_OK:-0}" = "1" ] || [ "${SNAP_LIST_ONLY:-0}" = "1" ] || [ "${SNAP_EMPTY:-0}" = "1" ] || exit 1
+    echo 41; exit 0 ;;
+  *)
+    exit 1 ;;
 esac
-exit 0

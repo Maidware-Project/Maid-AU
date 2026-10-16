@@ -29,10 +29,13 @@ pm_check() {
 pm_update() {
   echo "--- dnf upgrade ---"
   SNAP_PRE_ID=$(snap_pre "dnf")
-  if [ "$REQUIRE_SNAP" = "1" ] && [ -z "$SNAP_PRE_ID" ]; then
-    echo "ABORT: --require-snapshot and pre-snapshot failed."
-    log "strict abort: no pre-snapshot."
-    exit 2
+  if [ -z "$SNAP_PRE_ID" ]; then
+    if [ "$REQUIRE_SNAP" = "1" ]; then
+      echo "ABORT: --require-snapshot and pre-snapshot failed."
+      log "strict abort: no pre-snapshot."
+      exit 2
+    fi
+    say "safety: pre-update snapshot FAILED - continuing without rollback (--require-snapshot aborts instead)."
   fi
   if $SUDO dnf upgrade --refresh -y >"$TMP" 2>&1; then
     cat "$TMP"

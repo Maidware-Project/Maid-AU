@@ -60,6 +60,14 @@ pm_update() {
     fi
   fi
   SNAP_PRE_ID=$(snap_last)
+  if [ -z "$SNAP_PRE_ID" ]; then
+    if [ "$REQUIRE_SNAP" = "1" ]; then
+      echo "ABORT: --require-snapshot and no snapshot before the upgrade."
+      log "strict abort: no pre-update snapshot (zypper)."
+      exit 2
+    fi
+    say "safety: no snapshot before the upgrade - continuing without rollback (--require-snapshot aborts instead)."
+  fi
   echo "--- zypper dup (rpm packages) ---"
   # NOTE: --allow-vendor-change is required on Tumbleweed, not a shortcut:
   # without it dup stalls on vendor flips (Packman codec switches, repo
