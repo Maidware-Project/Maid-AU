@@ -10,6 +10,9 @@ PASS=0
 ok()   { PASS=$((PASS+1)); echo "ok $PASS - $1"; }
 fail() { echo "NOT OK - $1"; exit 1; }
 fresh_home() { rm -rf /tmp/maidau-t; mkdir -p /tmp/maidau-t; }
+# keep every test off the network; the maid suite section turns the
+# suite back on against a local fixture origin.
+export MAID_SUITE=0
 
 echo "== syntax =="
 for f in "$PKGDIR"/bin/*.sh "$PKGDIR"/install.sh; do
@@ -189,7 +192,7 @@ rm -rf /tmp/maidau-t
 
 echo "== maid suite =="
 fresh_home
-export NOTIFY_LOG=/tmp/maidau-t/notify.log
+export NOTIFY_LOG=/tmp/maidau-t/notify.log MAID_SUITE=1
 mkdir -p "/tmp/maidau-t/Documents/GitHub"
 git init -q --bare /tmp/maidau-origin.git
 git clone -q /tmp/maidau-origin.git "/tmp/maidau-t/Documents/GitHub/Maid BT" 2>/dev/null
@@ -206,6 +209,8 @@ git -C "/tmp/maidau-t/Documents/GitHub/Maid BT" add f2
 git -C "/tmp/maidau-t/Documents/GitHub/Maid BT" commit -qm two
 git -C "/tmp/maidau-t/Documents/GitHub/Maid BT" push -q 2>/dev/null || true
 git -C "/tmp/maidau-t/Documents/GitHub/Maid BT" reset -q --hard HEAD~1
+# point the suite at the local fixture origin instead of github
+export MAID_SUITE_LIST='Maid BT|/tmp/maidau-origin.git'
 HOME=/tmp/maidau-t UPDATE_PM=pacman bash "$PKGDIR/bin/update-all.sh" --check < /dev/null 2>&1 | grep -q "maid=1" || fail "behind repo not counted"
 grep -q "1 commit(s) behind" /tmp/maidau-t/.local/share/update-all.log || fail "behind not logged"
 ok "maid suite behind-counted in check"
@@ -221,6 +226,30 @@ grep -q "Maid BT.*redeployed" /tmp/maidau-t/.local/share/update-all.log || fail 
 grep -q "deployed" /tmp/maidau-t/maidau-deploy-marker || fail "fixture installer did not run"
 ok "maid suite pull + redeploy with UPDATE_MAID_DEPLOY=1"
 rm -rf /tmp/maidau-origin.git
+
+# a suite repo that is not on disk is cloned from its github url
+fresh_home
+export NOTIFY_LOG=/tmp/maidau-t/notify.log MAID_SUITE=1
+mkdir -p /tmp/maidau-clone
+git init -q --bare /tmp/maidau-clone/Maid-Helper.git
+git clone -q /tmp/maidau-clone/Maid-Helper.git /tmp/maidau-seed 2>/dev/null
+git -C /tmp/maidau-seed config user.email t@t.t
+git -C /tmp/maidau-seed config user.name t
+printf '#!/bin/bash\necho deployed >> "$HOME/maidau-clone-marker"\n' > /tmp/maidau-seed/install.sh
+chmod +x /tmp/maidau-seed/install.sh
+echo hi > /tmp/maidau-seed/f
+git -C /tmp/maidau-seed add f install.sh
+git -C /tmp/maidau-seed commit -qm one
+git -C /tmp/maidau-seed push -q origin HEAD 2>/dev/null || true
+export MAID_SUITE_LIST='Maid Helper|/tmp/maidau-clone/Maid-Helper.git'
+XDG_DATA_HOME= HOME=/tmp/maidau-t UPDATE_PM=pacman UPDATE_MAID_DEPLOY=1 bash "$PKGDIR/bin/update-all.sh" < /dev/null >/dev/null 2>&1 || fail "clone run crashed"
+grep -q "Maid Helper: cloned from github" /tmp/maidau-t/.local/share/update-all.log || fail "clone not logged"
+[ -d "/tmp/maidau-t/.local/share/maid-au/suite/Maid-Helper/.git" ] || fail "repo not cloned into managed dir"
+grep -q "deployed" /tmp/maidau-t/maidau-clone-marker || fail "cloned repo not deployed"
+ok "maid suite clones a missing repo from github"
+rm -rf /tmp/maidau-clone /tmp/maidau-seed
+
+export MAID_SUITE=0; unset MAID_SUITE_LIST
 rm -rf /tmp/maidau-t
 
 echo "== controllers via helper (non-suse) =="
