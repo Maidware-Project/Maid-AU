@@ -2,11 +2,13 @@
 # Backend: Fedora/RHEL (dnf). Sourced by update-all.sh - not run directly.
 # Provides: pm_name, pm_check, pm_update. Uses $SUDO, $TMP, log(), UPDATED.
 # Note: `dnf check-update` exits 100 when updates exist (not a failure).
+# shellcheck disable=SC2034  # cross-file state: read by update-all.sh after sourcing
 PM_PROBE="dnf --version"
 pm_name() { echo "dnf"; }
 
 pm_check() {
   ZYPPER_N=0; PACKMAN_N=0; SYS_HIT=0
+  # shellcheck disable=SC2024  # $TMP is user-owned: the redirect stays with the user
   sudo -n dnf check-update -q >"$TMP" 2>&1; rc=$?
   if [ "$rc" -eq 0 ]; then
     log "check: dnf: nothing to do."

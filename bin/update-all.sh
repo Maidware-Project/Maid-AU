@@ -135,7 +135,7 @@ detect_pm() {
       *arch*) echo pacman; return ;;
       *debian*|*ubuntu*) echo apt; return ;;
       *fedora*|*rhel*|*centos*) echo dnf; return ;;
-      *suse*|*opensuse*) echo zypper; return ;;
+      *suse*) echo zypper; return ;;
     esac
   fi
   for c in pacman apt-get dnf zypper; do
@@ -207,6 +207,7 @@ controllers_hook() {
       fi
     else
       CTRL_N=0
+      # shellcheck disable=SC2024  # $TMP is user-owned: the redirect stays with the user
       if sudo -n zypper --non-interactive list-updates >"$TMP" 2>&1; then
         if grep -qi "No updates found" "$TMP"; then
           log "check: controllers: none."
