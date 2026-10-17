@@ -142,10 +142,12 @@ from the same prefix - `pacman -R` also works there as usual.
 
 ## the Maid suite (Maid BT, Maidshare, Maid Watcher, Maid Helper, Maid Runner)
 
-Maid AU knows its own family: `--check` reports when a Maid checkout is
-behind its github upstream, a full run pulls it `--ff-only`, and
-`UPDATE_MAID_DEPLOY=1` also reruns each project's installer.
-Opt out anytime with `MAID_SUITE=0`.
+Maid AU knows its own family and pulls it from github. A checkout you
+already have is found by its github origin (any folder will do) and
+pulled `--ff-only`; one that is not on disk yet is cloned into
+`~/.local/share/maid-au/suite`. `--check` reports what is behind or
+missing, and `UPDATE_MAID_DEPLOY=1` also reruns each project's installer
+after a pull. Opt out anytime with `MAID_SUITE=0`.
 
 ## License
 
