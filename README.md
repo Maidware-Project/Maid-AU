@@ -147,7 +147,9 @@ already have is found by its github origin (any folder will do) and
 pulled `--ff-only`; one that is not on disk yet is cloned into
 `~/.local/share/maid-au/suite`. `--check` reports what is behind or
 missing, and `UPDATE_MAID_DEPLOY=1` also reruns each project's installer
-after a pull. Opt out anytime with `MAID_SUITE=0`.
+after a pull. Maid Watcher is not a repo of its own: it ships inside
+Maid BT (`watcher/`), so pulling Maid BT brings it. Opt out anytime with
+`MAID_SUITE=0`.
 
 ## License
 
