@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=Maid AU
 Comment=One-button system update: packages, flatpak, firmware
-Exec=/home/visa/.local/bin/system-updater
+Exec=@HOME@/.local/bin/system-updater
 Icon=software-update-available
 Terminal=false
 Type=Application
