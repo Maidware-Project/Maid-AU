@@ -22,8 +22,9 @@ command -v shellcheck >/dev/null 2>&1 && shellcheck -S error "$PKGDIR"/bin/*.sh 
 ok "syntax"
 
 echo "== personal data =="
-if grep -rn --exclude-dir=__pycache__ -iE "90:BF|SmartAction|soundcore|Liberty|Mothership|10\.0\.0|/(home|Users)/[^/[:space:]]+" \
-    "$PKGDIR/bin" "$PKGDIR/desktop" "$PKGDIR/README.md" "$PKGDIR/install.sh" 2>/dev/null; then
+if grep -rn --exclude-dir=__pycache__ -iE "([0-9a-f]{2}:){5}[0-9a-f]{2}|/(home|Users)/[^/[:space:]]+|(10|192\.168|172\.(1[6-9]|2[0-9]|3[01]))\.[0-9]{1,3}\.[0-9]{1,3}" \
+    "$PKGDIR/bin" "$PKGDIR/desktop" "$PKGDIR/README.md" "$PKGDIR/install.sh" 2>/dev/null \
+    | grep -v "AA:BB:CC:DD:EE:FF"; then
   fail "personal string leaked"
 fi
 ok "no personal data"

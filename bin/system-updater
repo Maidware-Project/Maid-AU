@@ -13,12 +13,45 @@ run() {
   fi
   exec "$@"
 }
+# Generic terminal choice: the freedesktop helper, then the user's own
+# $TERMINAL, then the desktop's configured default, then a neutral fallback.
+# Nothing here assumes a particular machine's setup.
+desktop_term() {
+  local app=""
+  if command -v kreadconfig6 >/dev/null 2>&1; then
+    app=$(kreadconfig6 --file kdeglobals --group General --key TerminalApplication 2>/dev/null)
+  elif command -v kreadconfig5 >/dev/null 2>&1; then
+    app=$(kreadconfig5 --file kdeglobals --group General --key TerminalApplication 2>/dev/null)
+  fi
+  if [ -z "$app" ] && command -v gsettings >/dev/null 2>&1; then
+    app=$(gsettings get org.gnome.desktop.default-applications.terminal exec 2>/dev/null | tr -d "'")
+  fi
+  printf '%s' "$app"
+}
+term_flag() {
+  case "$(basename "$1")" in
+    gnome-terminal) printf '%s' '--' ;;
+    xfce4-terminal) printf '%s' '-x' ;;
+    wezterm) printf '%s' 'start --' ;;
+    foot|blackbox-terminal) printf '%s' '' ;;
+    *) printf '%s' '-e' ;;
+  esac
+}
 pick_term() {
-  if command -v ghostty >/dev/null 2>&1; then echo "ghostty -e"; return; fi
-  if command -v konsole >/dev/null 2>&1; then echo "konsole -e"; return; fi
-  if command -v xfce4-terminal >/dev/null 2>&1; then echo "xfce4-terminal -x"; return; fi
-  if command -v gnome-terminal >/dev/null 2>&1; then echo "gnome-terminal --"; return; fi
-  if command -v xterm >/dev/null 2>&1; then echo "xterm -e"; return; fi
+  local app="" name=""
+  if command -v xdg-terminal-exec >/dev/null 2>&1; then echo "xdg-terminal-exec"; return; fi
+  if [ -n "${TERMINAL:-}" ] && command -v "${TERMINAL%% *}" >/dev/null 2>&1; then app="$TERMINAL"; fi
+  [ -n "$app" ] || app=$(desktop_term)
+  if [ -n "$app" ]; then
+    name=$(basename "${app%% *}")
+    echo "$name $(term_flag "$name")"
+    return
+  fi
+  for t in alacritty foot ghostty kitty konsole qterminal tilix wezterm xfce4-terminal gnome-terminal xterm; do
+    command -v "$t" >/dev/null 2>&1 || continue
+    echo "$t $(term_flag "$t")"
+    return
+  done
   echo ""
 }
 if [ -t 1 ]; then
@@ -27,7 +60,7 @@ if [ -t 1 ]; then
 fi
 TERM_CMD=$(pick_term)
 if [ -z "$TERM_CMD" ]; then
-  echo "No terminal found (ghostty/konsole/xfce4-terminal/gnome-terminal/xterm)." >&2
+  echo "No terminal found (install xdg-terminal-exec, or set \$TERMINAL)." >&2
   exit 1
 fi
 # shellcheck disable=SC2086
