@@ -459,7 +459,7 @@ maidsuite_update() {
     say "maid suite: disabled (MAID_SUITE=0) - skipping."
     log "maid suite: skipped (MAID_SUITE=0)."; return 0
   fi
-  say "maid suite: enabled - pulling Maid BT, Maidshare, watcher, Helper, Runner."
+  say "maid suite: enabled - pulling from github Maid BT, Maidshare, Maid Watcher, Maid Helper, Maid Runner."
   local d changed=0 behind before statline c
   while IFS= read -r d; do
     [ -n "$d" ] || continue
