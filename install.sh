@@ -67,7 +67,7 @@ detect_pm() {
       *arch*) echo pacman; return ;;
       *debian*|*ubuntu*) echo apt; return ;;
       *fedora*|*rhel*|*centos*) echo dnf; return ;;
-      *suse*|*opensuse*) echo zypper; return ;;
+      *suse*) echo zypper; return ;;
     esac
   fi
   for c in pacman apt-get dnf zypper; do
