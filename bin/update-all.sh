@@ -349,7 +349,7 @@ appimage_links() {
   [ -f "$conf" ] || return 0
   command -v curl >/dev/null 2>&1 || { log "appimage links: no curl, skipped."; return 0; }
   mkdir -p "$(dirname "$state")"; touch "$state" 2>/dev/null || true
-  local name url sha pin dest etag lastmod cached tmp dl got hexonly
+  local name url sha pin dest etag lastmod cached tmp got hexonly
   while IFS='|' read -r name url sha _rest; do
     case "$name" in ''|\#*) continue ;; esac
     [ -n "$url" ] || continue
@@ -594,6 +594,7 @@ if [ "${1:-}" = "--check" ]; then
   APID=$!
   wait "$PMPID"; wait "$FLPID"; wait "$FWDPID"; wait "$CTLPID"; wait "$APID"
   cat "$TMP.pmlog" "$TMP.flat" "$TMP.fw" "$TMP.ctrl" "$TMP.appimg" 2>/dev/null
+  # shellcheck disable=SC1090  # result file written by this script
   if [ -f "$PMF" ]; then . "$PMF"; else CHECK_FAIL=1; log "check: $PM_LABEL query FAILED"; fi
   if [ "${RC:-}" != "0" ]; then CHECK_FAIL=1; log "check: $PM_LABEL query FAILED"; fi
   FLAT_RC=$(sed -n 's/^RC=\([01]\) VAL=.*/\1/p' "$TMP.flat" | tail -n 1)
@@ -679,6 +680,7 @@ if pm_update; then :; else FAILED=1; fi
 [ "${AUR_FAILED:-0}" = "1" ] && PARTIAL=1
 wait "$FLPID"
 cat "$FLATF" 2>/dev/null
+# shellcheck disable=SC1090  # result file written by this script
 if [ -f "$FLATRF" ]; then . "$FLATRF"; else FAILED=1; log "flatpak: result lost"; fi
 [ "${BG_UPDATED:-0}" = "1" ] && UPDATED=1
 [ "${BG_FAILED:-0}" = "1" ] && FAILED=1
