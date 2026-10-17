@@ -169,7 +169,10 @@ if [ "$FAIL" = "1" ]; then
   warn "install incomplete: some files failed to install"
   exit 1
 fi
-command -v kbuildsycoca6 >/dev/null 2>&1 && kbuildsycoca6 --noincremental >/dev/null 2>&1 || true
+# user setup: menu cache refresh, skipped with --no-config / packaging
+if [ "$NOCONFIG" = "0" ]; then
+  command -v kbuildsycoca6 >/dev/null 2>&1 && kbuildsycoca6 --noincremental >/dev/null 2>&1 || true
+fi
 
 say "done. Backups (if any): *.bak-${BACKUP_TS}"
 say "passwordless updates are OPTIONAL and risky: a NOPASSWD package"
