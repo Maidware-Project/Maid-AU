@@ -1,5 +1,18 @@
 # changelog
 
+## maid suite finds and clones from github
+
+- the maid suite no longer guesses by folder name: each family repo is
+  matched by its github origin (so a checkout anywhere counts, e.g.
+  Maid Helper under `MHE/`), and one that is not on disk yet is cloned
+  from its github url into `~/.local/share/maid-au/suite`.
+- the status line reads "maid suite: enabled - pulling from github Maid
+  BT, Maidshare, Maid Watcher, Maid Helper, Maid Runner". Maid Watcher
+  has no repo of its own - it ships inside Maid BT - so pulling Maid BT
+  covers it.
+- tests point the suite at a local fixture origin (`MAID_SUITE_LIST`) so
+  the suite is exercised with no network; a new test covers the clone.
+
 ## snapshot honesty + maid suite visibility
 
 - a failed pre-update snapshot is now said loudly (console + log) on

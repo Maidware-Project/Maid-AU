@@ -430,10 +430,11 @@ maid_suite_list() {
   if [ -n "${MAID_SUITE_LIST:-}" ]; then
     printf '%s\n' "$MAID_SUITE_LIST"; return 0
   fi
+  # Maid Watcher is not published on its own - it ships inside Maid BT
+  # (watcher/), so pulling Maid BT covers it.
   cat <<'LIST'
 Maid BT|https://github.com/Maidware-Project/Maid-BT.git
 Maidshare|https://github.com/Maidware-Project/Maidshare.git
-Maid Watcher|https://github.com/Maidware-Project/Maid-Watcher.git
 Maid Helper|https://github.com/Maidware-Project/Maid-Helper.git
 Maid Runner|https://github.com/Maidware-Project/Maid-Runner.git
 LIST
