@@ -414,20 +414,62 @@ appimage_links() {
 
 # ---- maid suite: the updater knows about its own family ----
 # Only Maid-family repos are tracked here: Maid BT, Maidshare,
-# maid-watcher, Maid Helper and Maid Runner. The Nuclear plugin and
-# the Atrim launcher are separate projects with their own releases -
-# never touch them from here.
-# Opt out with
-# MAID_SUITE=0. Pulls are --ff-only (diverged trees are left alone and
-# reported); deploying still means rerunning each install.sh.
-maid_repos() {
-  local base name
+# Maid Watcher, Maid Helper and Maid Runner, all under
+# github.com/Maidware-Project. A checkout you already have is found by
+# its github origin (so where it sits on disk does not matter) and
+# pulled --ff-only; one that is not on disk yet is cloned from github
+# into ~/.local/share/maid-au/suite. The Nuclear plugin and the Atrim
+# launcher are separate projects with their own releases - never touch
+# them from here. Opt out of check + pull + clone with MAID_SUITE=0.
+# Pulls are --ff-only (diverged trees are left alone and reported);
+# deploying still means rerunning each install.sh.
+#
+# MAID_SUITE_LIST overrides the family (one "Name|url" per line) - the
+# tests use it, and so can anyone mirroring the suite elsewhere.
+maid_suite_list() {
+  if [ -n "${MAID_SUITE_LIST:-}" ]; then
+    printf '%s\n' "$MAID_SUITE_LIST"; return 0
+  fi
+  cat <<'LIST'
+Maid BT|https://github.com/Maidware-Project/Maid-BT.git
+Maidshare|https://github.com/Maidware-Project/Maidshare.git
+Maid Watcher|https://github.com/Maidware-Project/Maid-Watcher.git
+Maid Helper|https://github.com/Maidware-Project/Maid-Helper.git
+Maid Runner|https://github.com/Maidware-Project/Maid-Runner.git
+LIST
+}
+
+maid_clone_root() {
+  echo "${XDG_DATA_HOME:-$HOME/.local/share}/maid-au/suite"
+}
+
+maid_norm_url() {
+  # owner/repo form, so https and ssh remotes compare equal
+  local u="${1%.git}"
+  case "$u" in
+    git@github.com:*)     u="${u#git@github.com:}" ;;
+    https://github.com/*) u="${u#https://github.com/}" ;;
+    http://github.com/*)  u="${u#http://github.com/}" ;;
+  esac
+  printf '%s' "$u"
+}
+
+maid_find() {
+  # echo the checkout whose github origin matches $1, else nothing
+  local want base d got
+  want=$(maid_norm_url "$1")
   for base in "$HOME/Documents/GitHub" "$HOME/GitHub" "$HOME/Projects" \
-             "$HOME/src" "$HOME/code"; do
-    for name in "Maid BT" Maidshare maid-watcher "Maid Helper" "Maid Runner"; do
-      [ -d "$base/$name/.git" ] && echo "$base/$name"
-    done
+              "$HOME/src" "$HOME/code" "$(maid_clone_root)"; do
+    [ -d "$base" ] || continue
+    while IFS= read -r d; do
+      [ -n "$d" ] || continue
+      got=$(git -C "$d" remote get-url origin 2>/dev/null) || continue
+      if [ "$(maid_norm_url "$got")" = "$want" ]; then
+        echo "$d"; return 0
+      fi
+    done < <(find "$base" -maxdepth 3 -type d -name .git -printf '%h\n' 2>/dev/null)
   done
+  return 1
 }
 
 maid_behind() {
@@ -440,15 +482,21 @@ maidsuite_check() {
   if [ "${MAID_SUITE:-1}" = "0" ]; then
     log "check: maid suite: skipped (MAID_SUITE=0)."; echo 0; return 0
   fi
-  local d n=0 behind
-  while IFS= read -r d; do
-    [ -n "$d" ] || continue
-    behind=$(maid_behind "$d")
-    if [ "${behind:-0}" -gt 0 ] 2>/dev/null; then
-      log "check: maid suite: $(basename "$d"): $behind commit(s) behind."
+  local line name url d behind n=0
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    name="${line%%|*}"; url="${line#*|}"
+    if d=$(maid_find "$url"); then
+      behind=$(maid_behind "$d")
+      if [ "${behind:-0}" -gt 0 ] 2>/dev/null; then
+        log "check: maid suite: $name: $behind commit(s) behind."
+        n=$((n + 1))
+      fi
+    else
+      log "check: maid suite: $name: not on disk yet (a run will clone it)."
       n=$((n + 1))
     fi
-  done < <(maid_repos)
+  done < <(maid_suite_list)
   [ "$n" -eq 0 ] && log "check: maid suite: up to date."
   echo "$n"
 }
@@ -460,24 +508,37 @@ maidsuite_update() {
     log "maid suite: skipped (MAID_SUITE=0)."; return 0
   fi
   say "maid suite: enabled - pulling from github Maid BT, Maidshare, Maid Watcher, Maid Helper, Maid Runner."
-  local d changed=0 behind before statline c
-  while IFS= read -r d; do
-    [ -n "$d" ] || continue
-    behind=$(maid_behind "$d")
-    [ "${behind:-0}" -gt 0 ] 2>/dev/null || continue
-    before=$(git -C "$d" rev-parse HEAD 2>/dev/null || true)
-    if git -C "$d" pull --ff-only >/dev/null 2>&1; then
-      log "maid suite: $(basename "$d"): updated ($behind)."
-      while IFS= read -r c; do log "maid suite:   $c"; done < <(git -C "$d" log --oneline "$before..HEAD" 2>/dev/null || true)
-      statline=$(git -C "$d" diff --stat "$before..HEAD" 2>/dev/null | tail -n 1)
-      [ -n "$statline" ] && log "maid suite:   files: $statline"
-      changed=1
-      maidsuite_deploy "$d"
+  local line name url d behind before statline c changed=0
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    name="${line%%|*}"; url="${line#*|}"
+    if d=$(maid_find "$url"); then
+      behind=$(maid_behind "$d")
+      [ "${behind:-0}" -gt 0 ] 2>/dev/null || continue
+      before=$(git -C "$d" rev-parse HEAD 2>/dev/null || true)
+      if git -C "$d" pull --ff-only >/dev/null 2>&1; then
+        log "maid suite: $name: updated ($behind)."
+        while IFS= read -r c; do log "maid suite:   $c"; done < <(git -C "$d" log --oneline "$before..HEAD" 2>/dev/null || true)
+        statline=$(git -C "$d" diff --stat "$before..HEAD" 2>/dev/null | tail -n 1)
+        [ -n "$statline" ] && log "maid suite:   files: $statline"
+        changed=1
+        maidsuite_deploy "$name" "$d"
+      else
+        log "maid suite: $name: needs attention (diverged?) - left alone."
+        PARTIAL=1
+      fi
     else
-      log "maid suite: $(basename "$d"): needs attention (diverged?) - left alone."
-      PARTIAL=1
+      d="$(maid_clone_root)/$(basename "${url%.git}")"
+      mkdir -p "$(dirname "$d")" 2>/dev/null || true
+      if git clone --quiet "$url" "$d" >/dev/null 2>&1; then
+        log "maid suite: $name: cloned from github ($url)."
+        changed=1
+        maidsuite_deploy "$name" "$d"
+      else
+        log "maid suite: $name: could not clone ($url) - skipped."
+      fi
     fi
-  done < <(maid_repos)
+  done < <(maid_suite_list)
   [ "$changed" = "1" ] && UPDATED=1
   return 0
 }
@@ -486,22 +547,22 @@ maidsuite_deploy() {
   # Rerun a project's installer after its code updated. Opt-in via
   # UPDATE_MAID_DEPLOY=1 (default off: installers enable services).
   # stdin is /dev/null so interactive prompts skip themselves.
-  local d="$1"
+  local name="$1" d="$2"
   [ "${UPDATE_MAID_DEPLOY:-0}" = "1" ] || {
-    log "maid suite: $(basename "$d"): code updated; rerun its install.sh to deploy (or set UPDATE_MAID_DEPLOY=1)."
+    log "maid suite: $name: code updated; rerun its install.sh to deploy (or set UPDATE_MAID_DEPLOY=1)."
     return 0
   }
   [ -x "$d/install.sh" ] || {
-    log "maid suite: $(basename "$d"): no installer - deploy manually."
+    log "maid suite: $name: no installer - deploy manually."
     return 0
   }
-  log "maid suite: $(basename "$d"): UPDATE_MAID_DEPLOY=1 - rerunning install.sh on the commits above."
+  log "maid suite: $name: UPDATE_MAID_DEPLOY=1 - rerunning install.sh on the commits above."
   if ( cd "$d" && bash install.sh --no-packages </dev/null >/dev/null 2>&1 ); then
-    log "maid suite: $(basename "$d"): redeployed."
+    log "maid suite: $name: redeployed."
   elif ( cd "$d" && bash install.sh </dev/null >/dev/null 2>&1 ); then
-    log "maid suite: $(basename "$d"): redeployed."
+    log "maid suite: $name: redeployed."
   else
-    log "maid suite: $(basename "$d"): redeploy FAILED - run its install.sh by hand."
+    log "maid suite: $name: redeploy FAILED - run its install.sh by hand."
     PARTIAL=1
   fi
   return 0
@@ -616,7 +677,7 @@ if [ "${1:-}" = "--check" ]; then
   if [ "${MAID_SUITE:-1}" = "0" ]; then
     say "maid suite: disabled (MAID_SUITE=0) - not checked, not updated."
   elif [ "$MAID_N" -gt 0 ]; then
-    say "maid suite: $MAID_N repo(s) behind - run the updater to pull them."
+    say "maid suite: $MAID_N repo(s) behind or missing - run the updater to pull them."
   else
     say "maid suite: up to date."
   fi
