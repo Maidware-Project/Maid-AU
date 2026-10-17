@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 # Backend: openSUSE (zypper). Sourced by update-all.sh - not run directly.
 # Provides: pm_name, pm_check, pm_update. Uses $SUDO, $TMP, log(), UPDATED.
+# shellcheck disable=SC2034  # cross-file state: read by update-all.sh after sourcing
 PM_PROBE="zypper --version"
 pm_name() { echo "zypper"; }
 
 pm_check() {
   ZYPPER_N=0; PACKMAN_N=0; SYS_HIT=0
+  # shellcheck disable=SC2024  # $TMP is user-owned: the redirect stays with the user
   if sudo -n zypper --non-interactive dist-upgrade --dry-run --no-confirm >"$TMP" 2>&1; then
     if grep -qi "Nothing to do" "$TMP"; then
       log "check: zypper: nothing to do."
