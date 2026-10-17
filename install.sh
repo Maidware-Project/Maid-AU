@@ -119,10 +119,10 @@ copy_one() {
   tmp="$(mktemp)" || return 1
   if [ "$rewrite" = "1" ]; then
     # escape & (sed replacement metachar) in $HOME
-    sed -e "s|/home/EXAMPLEUSER/|${HOME//&/\\&}|g" "$src" > "$tmp"
+    sed -e "s|@HOME@|${HOME//&/\\&}|g" "$src" > "$tmp"
   elif [ "$rewrite" = "2" ]; then
     # system package: bare command names, resolved via PATH
-    sed -e "s|/home/EXAMPLEUSER/||g" -e "s|/.local/bin/||g" "$src" > "$tmp"
+    sed -e "s|@HOME@||g" -e "s|/.local/bin/||g" "$src" > "$tmp"
   else
     cp -a "$src" "$tmp"
   fi
