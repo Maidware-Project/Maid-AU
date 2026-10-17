@@ -2,6 +2,7 @@
 # Backend: Debian/Ubuntu (apt). Sourced by update-all.sh - not run directly.
 # Provides: pm_name, pm_check, pm_update. Uses $SUDO, $TMP, log(), UPDATED.
 # Covers every configured apt repo (including PPAs) via apt list.
+# shellcheck disable=SC2034  # cross-file state: read by update-all.sh after sourcing
 PM_PROBE="apt-get --version"
 pm_name() { echo "apt"; }
 

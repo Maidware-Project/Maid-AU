@@ -22,6 +22,7 @@ pm_check() {
     cat "$TMP"; log "check: zypper dry-run FAILED"; return 1
   fi
 
+  # shellcheck disable=SC2024  # $TMP is user-owned: the redirect stays with the user
   if sudo -n zypper --non-interactive list-updates -r packman >"$TMP" 2>&1; then
     if grep -qi "No updates found" "$TMP"; then
       log "check: packman: none."
