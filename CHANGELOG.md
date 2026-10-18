@@ -1,5 +1,18 @@
 # changelog
 
+## controller kmps follow the running kernel
+
+- the openSUSE controller stack no longer assumes the `-default`
+  kernel: it takes the flavor from the running kernel's release suffix
+  (`uname -r` "7.2.10-1-default" -> default, the same convention the
+  kmp names use) and installs the xone/xpadneo/hid-tmff2 kmps built
+  for it, so a longterm (or other) kernel gets its own builds.
+- a flavor the repos publish no build for is skipped with a plain line
+  in the log; the rest of the controller stack still installs.
+- the controller health check and the updater's count of missing kmps
+  resolve the same flavor, so both speak about the packages the
+  machine really needs.
+
 ## maid suite finds and clones from github
 
 - the maid suite no longer guesses by folder name: each family repo is

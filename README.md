@@ -107,11 +107,13 @@ update does.
 ## game controllers
 
 `controllers/` handles gamepad drivers (xbox/playstation/switch pads).
-on openSUSE it installs matching kernel modules, but only if you opt
-in: `UPDATE_CONTROLLERS=1 update-all.sh`. without it the updater says
-so up front and skips the whole thing. elsewhere it drives Maid
-Helper's gamepad doctor (`mod-gamepad.sh`) when installed - same
-opt-in, same reporting. without Helper:
+on openSUSE it installs the kernel modules built for the kernel you
+actually run (the `-kmp-default`/`-kmp-longterm`... flavor of
+`uname -r`; one the repos don't build for is skipped and said so in
+the log), but only if you opt in: `UPDATE_CONTROLLERS=1 update-all.sh`.
+without it the updater says so up front and skips the whole thing.
+elsewhere it drives Maid Helper's gamepad doctor (`mod-gamepad.sh`)
+when installed - same opt-in, same reporting. without Helper:
 - **Arch**: community DKMS packages (`xone-dkms`, `xpadneo-dkms`) via
   your AUR helper; `joycond`/`inputplumber` from AUR/extra.
 - **Fedora/Debian**: check community DKMS/COPR builds for your kernel;
