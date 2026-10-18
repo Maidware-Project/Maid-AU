@@ -1,5 +1,9 @@
 #!/bin/bash
+pkg="${*: -1}"
 case "$*" in
+  # module package probe (controllers flavor follow): names listed in
+  # KMP_MISSING have no published build (104), anything else is there.
+  *search*--match-exact*) case " ${KMP_MISSING:-} " in *" $pkg "*) exit 104;; esac; exit 0 ;;
   *dist-upgrade*--dry-run*) cat "${FIXDIR:-.}/zypper-dryrun.txt" ;;
   *list-updates*-r*packman*) cat "${FIXDIR:-.}/zypper-packman.txt" ;;
   *list-updates*) echo "No updates found" ;;

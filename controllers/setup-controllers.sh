@@ -4,7 +4,7 @@
 #   - kernel built-in (already in Tumbleweed 7.2.x): xpad, hid-nintendo,
 #     hid-playstation, hid-sony, hid-microsoft, joydev
 #   - kmods (Bazzite installs via akmods): xone, new-lg4ff, hid-tmff2, gcadapter
-#     -> on Tumbleweed: xone-kmp-default, hid-tmff2-kmp-default (+ xpadneo for BT)
+#     -> on Tumbleweed: xone/hid-tmff2/xpadneo kmps for the running kernel flavor
 #   - userspace (Bazzite): inputplumber, joycond, steam-devices, bluez
 #
 # Usage:
@@ -30,23 +30,53 @@ LOG="$HOME/.local/share/update-all.log"
 mkdir -p "$(dirname "$LOG")" 2>/dev/null || true
 log() { echo "$*" >> "$LOG"; }
 
+# module packages are published per kernel flavor (default, longterm,
+# rt, ...). the release of the running kernel ends in its flavor
+# (uname -r "7.2.10-1-default" -> "default") and the kmp names use it:
+# follow that instead of assuming -default.
+kmp_flavor() {
+  local krel
+  krel="$(uname -r)"
+  echo "${krel##*-}"
+}
+
+# yes when the repos know the package name. only a definite "no such
+# package" (zypper exit 104) means no: anything else falls back to the
+# install attempt, which reports honestly.
+zypper_knows() {
+  local rc
+  zypper --no-refresh --non-interactive search --match-exact "$1" >/dev/null 2>&1
+  rc=$?
+  [ "$rc" != "104" ]
+}
+
 # Tumbleweed native equivalents of Bazzite akmods + userspace.
 # NOTE: openSUSE ships classic xone (blacklists xpad for Xbox One pads).
 # Bazzite now uses xonedo (keeps xpad). See XONEDO=1 below.
 PKGS=(
-  xone-kmp-default
   xone-dongle-firmware
-  xpadneo-kmp-default
   joycond
   joycond-autoload
   inputplumber
-  hid-tmff2-kmp-default
   steam-devices
   bluez
   kernel-firmware
 )
 
 say() { echo "$*"; log "$*"; }
+
+# the module packages exist built for one kernel flavor each: take the
+# ones this machine's flavor has and say the ones it does not. default
+# always has them - only other flavors pay for the availability probe.
+FLAVOR="$(kmp_flavor)"
+for mod in xone xpadneo hid-tmff2; do
+  pkg="${mod}-kmp-${FLAVOR}"
+  if [ "$FLAVOR" = "default" ] || zypper_knows "$pkg"; then
+    PKGS+=("$pkg")
+  else
+    say "controllers: no $pkg for flavor $FLAVOR, skipping"
+  fi
+done
 
 say "--- controllers (bazzite-equivalent) ---"
 
@@ -131,7 +161,7 @@ if [ "${XONEDO:-0}" = "1" ]; then
   SRC="/usr/src/xonedo-0.1"
   XONEDO_URL="https://github.com/OpenGamingCollective/xonedo.git"
   if [ ! -d "$SRC" ]; then
-    $SUDO zypper --non-interactive install --no-confirm ${ZYPPER_NO_REFRESH:+--no-refresh} dkms kernel-default-devel curl bsdtar 2>&1 | tail -n 5
+    $SUDO zypper --non-interactive install --no-confirm ${ZYPPER_NO_REFRESH:+--no-refresh} dkms "kernel-${FLAVOR}-devel" curl bsdtar 2>&1 | tail -n 5
     $SUDO /usr/bin/git clone "$XONEDO_URL" "$SRC" 2>&1 | tail -n 3
   fi
   (

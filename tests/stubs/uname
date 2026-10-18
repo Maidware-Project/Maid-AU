@@ -1,0 +1,9 @@
+#!/bin/bash
+# the farm pretends to run one kernel so the flavor-following paths are
+# exercised the same everywhere. only -r is answered; anything else
+# passes through to the real uname.
+if [ "${1:-}" = "-r" ]; then
+  echo "6.18.54-1-longterm"
+else
+  exec /usr/bin/uname "$@"
+fi

@@ -6,6 +6,16 @@
 SHORT=0
 [ "${1:-}" = "--short" ] && SHORT=1
 
+# the module packages are published per kernel flavor: follow the
+# running kernel's release suffix (same resolution as
+# setup-controllers.sh).
+kmp_flavor() {
+  local krel
+  krel="$(uname -r)"
+  echo "${krel##*-}"
+}
+FLAVOR="$(kmp_flavor)"
+
 PASS=0; WARN=0; FAIL=0
 ok()   { PASS=$((PASS+1)); [ "$SHORT" -eq 0 ] && echo "  [OK]   $*"; return 0; }
 warn() { WARN=$((WARN+1)); echo "  [WARN] $*"; return 0; }
@@ -25,21 +35,21 @@ for m in xpad hid_nintendo hid_playstation hid_sony hid_microsoft joydev uinput;
 done
 
 echo "- distro packages (Bazzite akmods/userspace equivalents):"
-for p in xone-kmp-default xone-dongle-firmware xpadneo-kmp-default joycond inputplumber hid-tmff2-kmp-default steam-devices bluez; do
+for p in "xone-kmp-$FLAVOR" xone-dongle-firmware "xpadneo-kmp-$FLAVOR" joycond inputplumber "hid-tmff2-kmp-$FLAVOR" steam-devices bluez; do
   if rpm -q "$p" >/dev/null 2>&1; then ok "$p $(rpm -q --queryformat '%{VERSION}' "$p")"
   else warn "$p NOT installed"; fi
 done
 
 echo "- kmp matches running kernel:"
 KREL="$(uname -r)"
-if rpm -q xone-kmp-default >/dev/null 2>&1; then
+if rpm -q "xone-kmp-$FLAVOR" >/dev/null 2>&1; then
   /sbin/modinfo xone_dongle >/dev/null 2>&1 && ok "xone_dongle loads on $KREL" || warn "xone installed but modinfo fails (reboot pending?)"
   /sbin/modinfo xone_wired >/dev/null 2>&1 && ok "xone_wired loads on $KREL" || warn "xone_wired modinfo fails"
 fi
-if rpm -q xpadneo-kmp-default >/dev/null 2>&1; then
+if rpm -q "xpadneo-kmp-$FLAVOR" >/dev/null 2>&1; then
   /sbin/modinfo hid-xpadneo >/dev/null 2>&1 && ok "xpadneo loads on $KREL" || warn "xpadneo installed but modinfo fails (reboot pending?)"
 fi
-if rpm -q hid-tmff2-kmp-default >/dev/null 2>&1; then
+if rpm -q "hid-tmff2-kmp-$FLAVOR" >/dev/null 2>&1; then
   /sbin/modinfo hid-tmff-new >/dev/null 2>&1 && ok "hid-tmff-new loads on $KREL" || warn "hid-tmff2 installed but modinfo fails (reboot pending?)"
 fi
 

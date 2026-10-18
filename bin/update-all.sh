@@ -96,6 +96,15 @@ trim_log() {
 }
 say() { echo "$*"; log "$*"; }
 
+# kmp packages are published per kernel flavor: follow the running
+# kernel's release suffix (same resolution as
+# controllers/setup-controllers.sh).
+kmp_flavor() {
+  local krel
+  krel="$(uname -r)"
+  echo "${krel##*-}"
+}
+
 # ---- safety net: snapshots around upgrades (rollback beats fear) ----
 snap_last_q() {
   # check mode only: never prompts, silent skip without root
@@ -224,7 +233,10 @@ controllers_hook() {
           cat "$TMP"; return 1
         fi
       fi
-      for _cp in xone-kmp-default xpadneo-kmp-default joycond inputplumber hid-tmff2-kmp-default; do
+      # the kmp names carry the kernel flavor: ask for the ones built
+      # for the kernel this machine runs.
+      _kfl="$(kmp_flavor)"
+      for _cp in "xone-kmp-$_kfl" "xpadneo-kmp-$_kfl" joycond inputplumber "hid-tmff2-kmp-$_kfl"; do
         if ! rpm -q "$_cp" >/dev/null 2>&1; then CTRL_N=$((CTRL_N+1)); UPDATED=1; log "check: controllers: $_cp missing."; break; fi
       done
       echo "$CTRL_N"

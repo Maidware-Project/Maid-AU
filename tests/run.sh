@@ -15,7 +15,7 @@ fresh_home() { rm -rf /tmp/maidau-t; mkdir -p /tmp/maidau-t; }
 export MAID_SUITE=0
 
 echo "== syntax =="
-for f in "$PKGDIR"/bin/*.sh "$PKGDIR"/install.sh; do
+for f in "$PKGDIR"/bin/*.sh "$PKGDIR"/controllers/*.sh "$PKGDIR"/install.sh; do
   bash -n "$f" || fail "bash -n $f"
 done
 command -v shellcheck >/dev/null 2>&1 && shellcheck -S error "$PKGDIR"/bin/*.sh "$PKGDIR"/install.sh || true
@@ -38,7 +38,7 @@ ok "installer dry run clean"
 echo "== zypper --check =="
 fresh_home
 export PATH="$STUBS:$PATH" FIXDIR NOTIFY_LOG=/tmp/maidau-t/notify.log
-export RPM_PRESENT="xone-kmp-default xpadneo-kmp-default joycond inputplumber hid-tmff2-kmp-default"
+export RPM_PRESENT="xone-kmp-longterm xpadneo-kmp-longterm joycond inputplumber hid-tmff2-kmp-longterm"
 out=$(HOME=/tmp/maidau-t UPDATE_PM=zypper bash "$PKGDIR/bin/update-all.sh" --check < /dev/null 2>&1)
 echo "$out" | grep -q "zypper=2 extra=2" || fail "zypper counts: $out"
 echo "$out" | grep -q "System update available" || fail "zypper sys-hit notify"
@@ -94,14 +94,14 @@ ok "snapshot failure continues by default, logged loudly"
 
 fresh_home
 export NOTIFY_LOG=/tmp/maidau-t/notify.log
-out=$(HOME=/tmp/maidau-t UPDATE_PM=zypper SNAP_EMPTY=1 RPM_PRESENT="xone-kmp-default" bash "$PKGDIR/bin/update-all.sh" --require-snapshot < /dev/null 2>&1); rc=$?
+out=$(HOME=/tmp/maidau-t UPDATE_PM=zypper SNAP_EMPTY=1 RPM_PRESENT="xone-kmp-longterm" bash "$PKGDIR/bin/update-all.sh" --require-snapshot < /dev/null 2>&1); rc=$?
 [ "$rc" -eq 2 ] || fail "zypper strict no-readout exit $rc"
 echo "$out" | grep -q "ABORT: --require-snapshot and no snapshot before the upgrade." || fail "zypper strict abort missing"
 ok "strict mode aborts on zypper without a pre-update snapshot"
 
 fresh_home
 export NOTIFY_LOG=/tmp/maidau-t/notify.log
-HOME=/tmp/maidau-t UPDATE_PM=zypper SNAP_EMPTY=1 RPM_PRESENT="xone-kmp-default" bash "$PKGDIR/bin/update-all.sh" < /dev/null >/dev/null 2>&1 || fail "zypper no-readout run crashed"
+HOME=/tmp/maidau-t UPDATE_PM=zypper SNAP_EMPTY=1 RPM_PRESENT="xone-kmp-longterm" bash "$PKGDIR/bin/update-all.sh" < /dev/null >/dev/null 2>&1 || fail "zypper no-readout run crashed"
 grep -q "safety: no snapshot before the upgrade - continuing without rollback" /tmp/maidau-t/.local/share/update-all.log || fail "zypper loud warning missing"
 ok "zypper continues without snapshot by default, logged loudly"
 
@@ -153,6 +153,39 @@ ok "controllers skipped by default"
 HOME=/tmp/maidau-t UPDATE_PM=zypper UPDATE_CONTROLLERS=1 bash "$PKGDIR/bin/update-all.sh" < /dev/null >/dev/null 2>&1 || fail "opt-in run crashed"
 grep -q "Installing xone-kmp-test" /tmp/maidau-t/.local/share/update-all.log || fail "opt-in controllers did not run"
 ok "controllers run when opted in"
+
+echo "== controller kmps follow the running kernel flavor =="
+fresh_home
+export NOTIFY_LOG=/tmp/maidau-t/notify.log
+# update --check counts the kmps of the flavor uname reports (the stub
+# says longterm): xpadneo's longterm build is the missing one here.
+mkdir -p /tmp/maidau-t/.local/bin
+printf '#!/bin/bash\nexit 0\n' > /tmp/maidau-t/.local/bin/setup-controllers.sh
+chmod +x /tmp/maidau-t/.local/bin/setup-controllers.sh
+out=$(HOME=/tmp/maidau-t UPDATE_PM=zypper UPDATE_CONTROLLERS=1 RPM_PRESENT="xone-kmp-longterm joycond inputplumber" bash "$PKGDIR/bin/update-all.sh" --check < /dev/null 2>&1)
+grep -q "check: controllers: xpadneo-kmp-longterm missing." /tmp/maidau-t/.local/share/update-all.log || fail "check did not follow flavor: $out"
+grep -q "kmp-default" /tmp/maidau-t/.local/share/update-all.log && fail "check asked for the default flavor"
+ok "updater --check counts the running flavor's kmps"
+
+# setup-controllers: a fake sudo passes zypper through and swallows the
+# rest (the shared stub execs, which would touch the real machine); the
+# zypper stub says xone/hid-tmff2 have no longterm build.
+mkdir -p /tmp/maidau-t/fakesudo
+printf '#!/bin/bash\nwhile [ "${1:-}" = "-n" ]; do shift; done\ncase "$1" in zypper) exec "$@" ;; *) echo "sudo-stub: $*" ;; esac\n' > /tmp/maidau-t/fakesudo/sudo
+chmod +x /tmp/maidau-t/fakesudo/sudo
+export KMP_MISSING="xone-kmp-longterm hid-tmff2-kmp-longterm"
+out=$(HOME=/tmp/maidau-t USER=maid PATH="/tmp/maidau-t/fakesudo:$PATH" bash "$PKGDIR/controllers/setup-controllers.sh" --update < /dev/null 2>&1)
+echo "$out" | grep -q "no xone-kmp-longterm for flavor longterm, skipping" || fail "unbuilt flavor kmp not skipped: $out"
+echo "$out" | grep -q "xpadneo-kmp-longterm" || fail "flavor's xpadneo kmp not installed: $out"
+echo "$out" | grep -q "kmp-default" && fail "default kmp used on a longterm kernel"
+unset KMP_MISSING
+ok "setup installs the flavor's kmps, skips the unbuilt ones"
+
+# the health check asks for the same flavor
+out=$(HOME=/tmp/maidau-t RPM_PRESENT="xone-kmp-longterm xpadneo-kmp-longterm joycond inputplumber hid-tmff2-kmp-longterm" bash "$PKGDIR/controllers/check-controllers.sh" < /dev/null 2>&1)
+echo "$out" | grep -q "\[OK\]   xpadneo-kmp-longterm" || fail "health check did not follow flavor: $out"
+echo "$out" | grep -q "kmp-default" && fail "health check asked for the default flavor"
+ok "health check follows the flavor too"
 
 echo "== appimages =="
 fresh_home
