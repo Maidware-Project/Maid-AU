@@ -32,7 +32,7 @@ log() { echo "$*" >> "$LOG"; }
 
 # module packages are published per kernel flavor (default, longterm,
 # rt, ...). the release of the running kernel ends in its flavor
-# (uname -r "7.2.10-1-default" -> "default") and the kmp names use it:
+# (a release ending in -default -> "default") and the kmp names use it:
 # follow that instead of assuming -default.
 kmp_flavor() {
   local krel
