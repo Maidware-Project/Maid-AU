@@ -1,8 +1,8 @@
 # contributing
 
 small, reviewable changes only - one logical change per pull request. if
-it needs a paragraph to explain, it's two changes. read AGENTS.md first;
-it applies to humans and AI assistants alike. maintained by Maidware
+it needs a paragraph to explain, it's two changes. read README.md first;
+it covers what the project is and how it builds. maintained by Maidware
 Project.
 
 ## commits
@@ -33,8 +33,7 @@ Project.
 ## know your patch
 
 the updater runs as root on other people's machines. understand every line
-you send, assistant-written ones included, and drop anything you can't
-explain.
+you send, and drop anything you can't explain.
 
 you need basic linux: the terminal, permissions, sudo, `~/.config`, and a
 feel for what a package manager really does. guessing here has real
