@@ -667,7 +667,22 @@ if [ "${1:-}" = "--check" ]; then
     if out=$(appimage_check); then echo "RC=0 VAL=$out"; else echo "RC=1 VAL=0"; fi ) >"$TMP.appimg" 2>&1 &
   APID=$!
   wait "$PMPID"; wait "$FLPID"; wait "$FWDPID"; wait "$CTLPID"; wait "$APID"
-  cat "$TMP.pmlog" "$TMP.flat" "$TMP.fw" "$TMP.ctrl" "$TMP.appimg" 2>/dev/null
+  # readable output: the package-manager job prints for people outright.
+  # the other jobs emit machine protocol that the parsers below read from
+  # their dedicated files - cat'ing those raw used to print "RC=0 VAL=0"
+  # noise into the check output. the controllers helper embeds report
+  # text inside its protocol line, so lift that text out and print it
+  # without the markers; bare counts stay machine-side.
+  cat "$TMP.pmlog" "$TMP.ctrl" 2>/dev/null | awk '
+    { lines[NR] = $0 }
+    END {
+      for (i = 1; i <= NR; i++) {
+        l = lines[i]
+        sub(/^RC=[0-9]+ VAL=/, "", l)
+        if (l ~ / UPDATED=[0-9]+$/ || l ~ /^[0-9]+$/) continue
+        if (l != "") print l
+      }
+    }'
   # shellcheck disable=SC1090  # result file written by this script
   if [ -f "$PMF" ]; then . "$PMF"; else CHECK_FAIL=1; log "check: $PM_LABEL query FAILED"; fi
   if [ "${RC:-}" != "0" ]; then CHECK_FAIL=1; log "check: $PM_LABEL query FAILED"; fi
@@ -717,6 +732,11 @@ if [ "${1:-}" = "--check" ]; then
 fi
 
 trim_log
+T_TOT=$(date +%s)
+dur_fmt() {
+  local s=$1
+  printf '%dm%02ds' $((s / 60)) $((s % 60))
+}
 say "=== $(date) [$PM_LABEL] ==="
 
 LAST_MSG=$(last_info)
@@ -750,9 +770,12 @@ fi
 # metadata was just refreshed above: later zypper installs in this run
 # skip re-downloading it (setup-controllers honors this env var)
 export ZYPPER_NO_REFRESH=1
+T_PM=$(date +%s)
 if pm_update; then :; else FAILED=1; fi
+say "packages: $PM_LABEL took $(dur_fmt $(($(date +%s) - T_PM)))"
 [ "${AUR_FAILED:-0}" = "1" ] && PARTIAL=1
 wait "$FLPID"
+say "flatpak: ran alongside packages, also done"
 cat "$FLATF" 2>/dev/null
 # shellcheck disable=SC1090  # result file written by this script
 if [ -f "$FLATRF" ]; then . "$FLATRF"; else FAILED=1; log "flatpak: result lost"; fi
@@ -763,7 +786,7 @@ appimage_update
 maidsuite_update
 fwupd_update
 
-say "=== done (failed=$FAILED updated=$UPDATED important=$IMPORTANT) ==="
+say "=== done ($(dur_fmt $(($(date +%s) - T_TOT)))): failed=$FAILED updated=$UPDATED important=$IMPORTANT ==="
 [ -n "$SNAP_INFO" ] && say "safety: $SNAP_INFO"
 
 REBOOT_NEEDED=0
