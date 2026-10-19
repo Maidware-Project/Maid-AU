@@ -39,6 +39,7 @@ if [ "$UNINST" = "1" ]; then
     "$BINDIR"/pm-pacman.sh "$BINDIR"/pm-apt.sh \
     "$BINDIR"/setup-controllers.sh "$BINDIR"/check-controllers.sh
   rm -f "$SHAREDIR"/applications/system-updater.desktop
+  rm -rf "$SHAREDIR"/maid-au/patches
   if [ "$PURGE" = "1" ]; then
     rm -f "$HOME"/.config/maidau-appimages.conf "$HOME"/.local/share/update-all.log \
       "$HOME"/.local/share/update-all.last "$HOME"/.local/share/maidau-appimages.state
@@ -161,6 +162,15 @@ fi
 for f in "$PKGDIR"/desktop/*.desktop; do
   [ -f "$f" ] || continue
   copy_one "$f" "$SHAREDIR/applications/$(basename "$f")" "$REWRITE" \
+    || { warn "could not install $(basename "$f")"; FAIL=1; }
+done
+
+# the kdeconnect early-login fix (kernel 7.2.11 / Plasma 6.8) travels
+# with the suite: ~/.local/share/maid-au/patches/kdeconnect-26.08.2/
+for f in "$PKGDIR"/patches/kdeconnect-26.08.2/*; do
+  [ -f "$f" ] || continue
+  copy_one "$f" \
+    "$SHAREDIR/maid-au/patches/kdeconnect-26.08.2/$(basename "$f")" \
     || { warn "could not install $(basename "$f")"; FAIL=1; }
 done
 
