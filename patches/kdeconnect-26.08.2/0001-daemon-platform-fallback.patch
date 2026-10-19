@@ -1,0 +1,103 @@
+From 7720265c4882444fe08a29b403acb1e32acbde6b Mon Sep 17 00:00:00 2001
+From: visa <visa@localhost>
+Date: Mon, 19 Oct 2026 20:15:24 +0300
+Subject: [PATCH] daemon: do not abort when no display server is available yet
+
+kdeconnectd is a D-Bus activated service, so it can be started very early
+during login, before the session environment (XDG_SESSION_TYPE,
+WAYLAND_DISPLAY, DISPLAY) has been propagated to the systemd user
+instance. In that situation platform detection did nothing and Qt's own
+detection could pick xcb because DISPLAY was already set, while Xwayland
+was not accepting connections yet. Failing to initialize a platform
+plugin makes Qt call qFatal() and abort the daemon, which shows up as a
+crash on login.
+
+Instead of leaving the platform unspecified, determine the preferred
+platform (probing for the compositor socket when WAYLAND_DISPLAY is
+missing) and always append fallbacks, ending with the offscreen platform,
+so that a temporarily unavailable display server can no longer abort the
+daemon. Also warn when the offscreen platform ends up being used.
+
+Signed-off-by: visa <visa@localhost>
+---
+ daemon/kdeconnectd.cpp | 47 ++++++++++++++++++++++++++++++++++++------
+ 1 file changed, 41 insertions(+), 6 deletions(-)
+
+diff --git a/daemon/kdeconnectd.cpp b/daemon/kdeconnectd.cpp
+index 735cfbd68..dd8524816 100644
+--- a/daemon/kdeconnectd.cpp
++++ b/daemon/kdeconnectd.cpp
+@@ -8,6 +8,7 @@
+ #include <QCommandLineOption>
+ #include <QCommandLineParser>
+ #include <QDBusMessage>
++#include <QDir>
+ #include <QIcon>
+ #include <QQuickStyle>
+ #include <QStandardPaths>
+@@ -41,15 +42,45 @@ static void detectPlatform(int argc, char **argv)
+             return;
+         }
+     }
++    // kdeconnectd can be D-Bus activated very early during login, before the
++    // session environment (XDG_SESSION_TYPE, WAYLAND_DISPLAY, DISPLAY) has
++    // been propagated to the systemd user instance. If the platform is then
++    // left unspecified, Qt's own detection may pick xcb because DISPLAY is
++    // set, even though Xwayland is not accepting connections yet. Failing to
++    // initialize a platform plugin is fatal and aborts the daemon, so always
++    // specify an ordered list of platforms to try instead.
++    // On Windows and macOS the platform plugin names are different, leave
++    // their platform detection alone.
++#if !defined(Q_OS_WIN) && !defined(Q_OS_MACOS)
+     const QByteArray sessionType = qgetenv("XDG_SESSION_TYPE");
+-    if (sessionType.isEmpty()) {
+-        return;
++
++    // Without WAYLAND_DISPLAY, Qt cannot find the compositor even if it is
++    // already accepting connections. Look for its socket in the runtime
++    // directory.
++    if (qEnvironmentVariableIsEmpty("WAYLAND_DISPLAY")) {
++        const QString runtimeDir = QString::fromLocal8Bit(qgetenv("XDG_RUNTIME_DIR"));
++        if (!runtimeDir.isEmpty()) {
++            const QFileInfoList sockets = QDir(runtimeDir).entryInfoList({QStringLiteral("wayland-*")}, QDir::Files | QDir::System);
++            for (const QFileInfo &socket : sockets) {
++                if (socket.exists() && !socket.isFile() && !socket.isDir()) {
++                    qputenv("WAYLAND_DISPLAY", socket.fileName().toLocal8Bit());
++                    break;
++                }
++            }
++        }
+     }
+-    if (qstrcmp(sessionType.constData(), "wayland") == 0) {
+-        qputenv("QT_QPA_PLATFORM", "wayland");
+-    } else if (qstrcmp(sessionType.constData(), "x11") == 0) {
+-        qputenv("QT_QPA_PLATFORM", "xcb");
++
++    // Prefer the platform which matches the session, then try the other
++    // display server, and finally fall back to a headless platform so that
++    // the daemon can always start.
++    const bool preferXcb = sessionType == QByteArrayLiteral("x11")
++        || (sessionType != QByteArrayLiteral("wayland") && qEnvironmentVariableIsEmpty("WAYLAND_DISPLAY") && !qEnvironmentVariableIsEmpty("DISPLAY"));
++    if (preferXcb) {
++        qputenv("QT_QPA_PLATFORM", QByteArrayLiteral("xcb;wayland;offscreen"));
++    } else {
++        qputenv("QT_QPA_PLATFORM", QByteArrayLiteral("wayland;xcb;offscreen"));
+     }
++#endif
+ }
+ 
+ int main(int argc, char *argv[])
+@@ -72,6 +103,10 @@ int main(int argc, char *argv[])
+     qputenv("SOLID_DISABLE_KDECONNECT", "1");
+ 
+     QApplication app(argc, argv);
++    if (QGuiApplication::platformName() == QLatin1String("offscreen")) {
++        qWarning() << "No display server is available, running with the offscreen platform;"
++                      " features relying on it (e.g. clipboard sharing) will not work.";
++    }
+     KAboutData aboutData(QStringLiteral("kdeconnect.daemon"),
+                          i18n("KDE Connect Daemon"),
+                          QStringLiteral(KDECONNECT_VERSION_STRING),
+-- 
+2.56.0
+
