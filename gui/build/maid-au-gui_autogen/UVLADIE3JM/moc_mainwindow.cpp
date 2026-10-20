@@ -41,10 +41,11 @@ template <> constexpr inline auto MainWindow::qt_create_metaobjectdata<qt_meta_t
         "MainWindow",
         "startCheck",
         "",
-        "cancelCheck",
         "startUpdate",
+        "cancelCheck",
         "openLog",
         "showAbout",
+        "quitRequested",
         "trayActivated",
         "QSystemTrayIcon::ActivationReason",
         "reason",
@@ -56,36 +57,51 @@ template <> constexpr inline auto MainWindow::qt_create_metaobjectdata<qt_meta_t
         "checkFailed",
         "QProcess::ProcessError",
         "error",
+        "readUpdateOutput",
+        "updateFinished",
+        "updateFailed",
         "loadLastUpdate"
     };
 
     QtMocHelpers::UintData qt_methods {
         // Slot 'startCheck'
         QtMocHelpers::SlotData<void()>(1, 2, QMC::AccessPublic, QMetaType::Void),
-        // Slot 'cancelCheck'
-        QtMocHelpers::SlotData<void()>(3, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'startUpdate'
+        QtMocHelpers::SlotData<void()>(3, 2, QMC::AccessPublic, QMetaType::Void),
+        // Slot 'cancelCheck'
         QtMocHelpers::SlotData<void()>(4, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'openLog'
         QtMocHelpers::SlotData<void()>(5, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'showAbout'
         QtMocHelpers::SlotData<void()>(6, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'quitRequested'
+        QtMocHelpers::SlotData<void()>(7, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'trayActivated'
-        QtMocHelpers::SlotData<void(QSystemTrayIcon::ActivationReason)>(7, 2, QMC::AccessPrivate, QMetaType::Void, {{
-            { 0x80000000 | 8, 9 },
+        QtMocHelpers::SlotData<void(QSystemTrayIcon::ActivationReason)>(8, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { 0x80000000 | 9, 10 },
         }}),
         // Slot 'readCheckOutput'
-        QtMocHelpers::SlotData<void()>(10, 2, QMC::AccessPrivate, QMetaType::Void),
+        QtMocHelpers::SlotData<void()>(11, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'checkFinished'
-        QtMocHelpers::SlotData<void(int, QProcess::ExitStatus)>(11, 2, QMC::AccessPrivate, QMetaType::Void, {{
-            { QMetaType::Int, 12 }, { 0x80000000 | 13, 14 },
+        QtMocHelpers::SlotData<void(int, QProcess::ExitStatus)>(12, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { QMetaType::Int, 13 }, { 0x80000000 | 14, 15 },
         }}),
         // Slot 'checkFailed'
-        QtMocHelpers::SlotData<void(QProcess::ProcessError)>(15, 2, QMC::AccessPrivate, QMetaType::Void, {{
-            { 0x80000000 | 16, 17 },
+        QtMocHelpers::SlotData<void(QProcess::ProcessError)>(16, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { 0x80000000 | 17, 18 },
+        }}),
+        // Slot 'readUpdateOutput'
+        QtMocHelpers::SlotData<void()>(19, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'updateFinished'
+        QtMocHelpers::SlotData<void(int, QProcess::ExitStatus)>(20, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { QMetaType::Int, 13 }, { 0x80000000 | 14, 15 },
+        }}),
+        // Slot 'updateFailed'
+        QtMocHelpers::SlotData<void(QProcess::ProcessError)>(21, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { 0x80000000 | 17, 18 },
         }}),
         // Slot 'loadLastUpdate'
-        QtMocHelpers::SlotData<void()>(18, 2, QMC::AccessPrivate, QMetaType::Void),
+        QtMocHelpers::SlotData<void()>(22, 2, QMC::AccessPrivate, QMetaType::Void),
     };
     QtMocHelpers::UintData qt_properties {
     };
@@ -110,15 +126,19 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
     if (_c == QMetaObject::InvokeMetaMethod) {
         switch (_id) {
         case 0: _t->startCheck(); break;
-        case 1: _t->cancelCheck(); break;
-        case 2: _t->startUpdate(); break;
+        case 1: _t->startUpdate(); break;
+        case 2: _t->cancelCheck(); break;
         case 3: _t->openLog(); break;
         case 4: _t->showAbout(); break;
-        case 5: _t->trayActivated((*reinterpret_cast<std::add_pointer_t<QSystemTrayIcon::ActivationReason>>(_a[1]))); break;
-        case 6: _t->readCheckOutput(); break;
-        case 7: _t->checkFinished((*reinterpret_cast<std::add_pointer_t<int>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QProcess::ExitStatus>>(_a[2]))); break;
-        case 8: _t->checkFailed((*reinterpret_cast<std::add_pointer_t<QProcess::ProcessError>>(_a[1]))); break;
-        case 9: _t->loadLastUpdate(); break;
+        case 5: _t->quitRequested(); break;
+        case 6: _t->trayActivated((*reinterpret_cast<std::add_pointer_t<QSystemTrayIcon::ActivationReason>>(_a[1]))); break;
+        case 7: _t->readCheckOutput(); break;
+        case 8: _t->checkFinished((*reinterpret_cast<std::add_pointer_t<int>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QProcess::ExitStatus>>(_a[2]))); break;
+        case 9: _t->checkFailed((*reinterpret_cast<std::add_pointer_t<QProcess::ProcessError>>(_a[1]))); break;
+        case 10: _t->readUpdateOutput(); break;
+        case 11: _t->updateFinished((*reinterpret_cast<std::add_pointer_t<int>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QProcess::ExitStatus>>(_a[2]))); break;
+        case 12: _t->updateFailed((*reinterpret_cast<std::add_pointer_t<QProcess::ProcessError>>(_a[1]))); break;
+        case 13: _t->loadLastUpdate(); break;
         default: ;
         }
     }
@@ -143,14 +163,14 @@ int MainWindow::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 10)
+        if (_id < 14)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 10;
+        _id -= 14;
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 10)
+        if (_id < 14)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 10;
+        _id -= 14;
     }
     return _id;
 }

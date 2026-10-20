@@ -28,15 +28,16 @@ public:
 
 public slots:
     void startCheck();
+    void startUpdate();
 
 protected:
     void closeEvent(QCloseEvent *event) override;
 
 private slots:
     void cancelCheck();
-    void startUpdate();
     void openLog();
     void showAbout();
+    void quitRequested();
     void trayActivated(QSystemTrayIcon::ActivationReason reason);
     void readCheckOutput();
     void checkFinished(int exitCode, QProcess::ExitStatus status);

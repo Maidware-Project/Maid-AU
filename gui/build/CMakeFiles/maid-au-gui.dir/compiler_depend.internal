@@ -128,6 +128,7 @@
  /usr/include/c++/16/bits/localefwd.h
  /usr/include/c++/16/bits/memory_resource.h
  /usr/include/c++/16/bits/memoryfwd.h
+ /usr/include/c++/16/bits/monostate.h
  /usr/include/c++/16/bits/move.h
  /usr/include/c++/16/bits/nested_exception.h
  /usr/include/c++/16/bits/new_allocator.h
@@ -225,6 +226,8 @@
  /usr/include/c++/16/numeric
  /usr/include/c++/16/optional
  /usr/include/c++/16/pstl/execution_defs.h
+ /usr/include/c++/16/pstl/glue_algorithm_defs.h
+ /usr/include/c++/16/pstl/glue_memory_defs.h
  /usr/include/c++/16/pstl/glue_numeric_defs.h
  /usr/include/c++/16/pstl/pstl_config.h
  /usr/include/c++/16/ratio
@@ -280,6 +283,7 @@
  /usr/include/linux/types.h
  /usr/include/locale.h
  /usr/include/pthread.h
+ /usr/include/qt6/QtCore/QByteArray
  /usr/include/qt6/QtCore/QProcess
  /usr/include/qt6/QtCore/QSettings
  /usr/include/qt6/QtCore/QString
@@ -991,6 +995,7 @@ CMakeFiles/maid-au-gui.dir/maid-au-gui_autogen/mocs_compilation.cpp.o
  /usr/include/locale.h
  /usr/include/math.h
  /usr/include/pthread.h
+ /usr/include/qt6/QtCore/QByteArray
  /usr/include/qt6/QtCore/QProcess
  /usr/include/qt6/QtCore/QSettings
  /usr/include/qt6/QtCore/QString
@@ -1474,11 +1479,13 @@ CMakeFiles/maid-au-gui.dir/src/main.cpp.o
  /usr/include/locale.h
  /usr/include/math.h
  /usr/include/pthread.h
+ /usr/include/qt6/QtCore/QByteArray
  /usr/include/qt6/QtCore/QCommandLineOption
  /usr/include/qt6/QtCore/QCommandLineParser
  /usr/include/qt6/QtCore/QProcess
  /usr/include/qt6/QtCore/QSettings
  /usr/include/qt6/QtCore/QString
+ /usr/include/qt6/QtCore/QTextStream
  /usr/include/qt6/QtCore/QTimer
  /usr/include/qt6/QtCore/q17memory.h
  /usr/include/qt6/QtCore/q20bit.h
@@ -1617,6 +1624,7 @@ CMakeFiles/maid-au-gui.dir/src/main.cpp.o
  /usr/include/qt6/QtCore/qtversionchecks.h
  /usr/include/qt6/QtCore/qtypeinfo.h
  /usr/include/qt6/QtCore/qtypes.h
+ /usr/include/qt6/QtCore/qurl.h
  /usr/include/qt6/QtCore/qutf8stringview.h
  /usr/include/qt6/QtCore/qvariant.h
  /usr/include/qt6/QtCore/qvarlengtharray.h
@@ -1641,22 +1649,34 @@ CMakeFiles/maid-au-gui.dir/src/main.cpp.o
  /usr/include/qt6/QtGui/qkeysequence.h
  /usr/include/qt6/QtGui/qpaintdevice.h
  /usr/include/qt6/QtGui/qpalette.h
+ /usr/include/qt6/QtGui/qpen.h
  /usr/include/qt6/QtGui/qpixelformat.h
  /usr/include/qt6/QtGui/qpixmap.h
  /usr/include/qt6/QtGui/qpolygon.h
  /usr/include/qt6/QtGui/qregion.h
  /usr/include/qt6/QtGui/qrgb.h
  /usr/include/qt6/QtGui/qrgba64.h
+ /usr/include/qt6/QtGui/qtextcursor.h
+ /usr/include/qt6/QtGui/qtextdocument.h
+ /usr/include/qt6/QtGui/qtextformat.h
+ /usr/include/qt6/QtGui/qtextoption.h
  /usr/include/qt6/QtGui/qtgui-config.h
  /usr/include/qt6/QtGui/qtguiexports.h
  /usr/include/qt6/QtGui/qtguiglobal.h
  /usr/include/qt6/QtGui/qtransform.h
  /usr/include/qt6/QtGui/qwindowdefs.h
  /usr/include/qt6/QtWidgets/QApplication
+ /usr/include/qt6/QtWidgets/QDialog
+ /usr/include/qt6/QtWidgets/QInputDialog
+ /usr/include/qt6/QtWidgets/QLineEdit
  /usr/include/qt6/QtWidgets/QMainWindow
  /usr/include/qt6/QtWidgets/QStyle
  /usr/include/qt6/QtWidgets/QSystemTrayIcon
  /usr/include/qt6/QtWidgets/qapplication.h
+ /usr/include/qt6/QtWidgets/qdialog.h
+ /usr/include/qt6/QtWidgets/qframe.h
+ /usr/include/qt6/QtWidgets/qinputdialog.h
+ /usr/include/qt6/QtWidgets/qlineedit.h
  /usr/include/qt6/QtWidgets/qmainwindow.h
  /usr/include/qt6/QtWidgets/qsizepolicy.h
  /usr/include/qt6/QtWidgets/qstyle.h
@@ -2009,6 +2029,7 @@ CMakeFiles/maid-au-gui.dir/src/mainwindow.cpp.o
  /usr/include/locale.h
  /usr/include/math.h
  /usr/include/pthread.h
+ /usr/include/qt6/QtCore/QByteArray
  /usr/include/qt6/QtCore/QDateTime
  /usr/include/qt6/QtCore/QDir
  /usr/include/qt6/QtCore/QFile
@@ -2251,6 +2272,7 @@ CMakeFiles/maid-au-gui.dir/src/mainwindow.cpp.o
  /usr/include/qt6/QtWidgets/QPushButton
  /usr/include/qt6/QtWidgets/QScrollBar
  /usr/include/qt6/QtWidgets/QStatusBar
+ /usr/include/qt6/QtWidgets/QStyle
  /usr/include/qt6/QtWidgets/QSystemTrayIcon
  /usr/include/qt6/QtWidgets/QVBoxLayout
  /usr/include/qt6/QtWidgets/qabstractbutton.h
@@ -2276,6 +2298,7 @@ CMakeFiles/maid-au-gui.dir/src/mainwindow.cpp.o
  /usr/include/qt6/QtWidgets/qscrollbar.h
  /usr/include/qt6/QtWidgets/qsizepolicy.h
  /usr/include/qt6/QtWidgets/qstatusbar.h
+ /usr/include/qt6/QtWidgets/qstyle.h
  /usr/include/qt6/QtWidgets/qsystemtrayicon.h
  /usr/include/qt6/QtWidgets/qtabwidget.h
  /usr/include/qt6/QtWidgets/qtextedit.h

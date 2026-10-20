@@ -310,7 +310,7 @@ void MainWindow::buildMenus()
     fileMenu->addSeparator();
     auto *quitAction = fileMenu->addAction(QStringLiteral("&Quit"));
     quitAction->setShortcut(QKeySequence::Quit);
-    connect(quitAction, &QAction::triggered, qApp, &QApplication::quit);
+    connect(quitAction, &QAction::triggered, this, &MainWindow::quitRequested);
 
     auto *helpMenu = menuBar()->addMenu(QStringLiteral("&Help"));
     auto *aboutAction = helpMenu->addAction(QStringLiteral("&About Maid AU"));
@@ -346,7 +346,7 @@ void MainWindow::buildTray(const QIcon &icon)
     connect(logAction, &QAction::triggered, this, &MainWindow::openLog);
     menu->addSeparator();
     m_trayQuitAction = menu->addAction(QStringLiteral("Quit"));
-    connect(m_trayQuitAction, &QAction::triggered, qApp, &QApplication::quit);
+    connect(m_trayQuitAction, &QAction::triggered, this, &MainWindow::quitRequested);
 
     m_tray->setContextMenu(menu);
     connect(m_tray, &QSystemTrayIcon::activated,
@@ -657,24 +657,147 @@ void MainWindow::parseCheckResult(int exitCode, bool normalExit)
 
 void MainWindow::startUpdate()
 {
-    if (m_terminalUpdater.isEmpty()) {
-        showError(QStringLiteral("Terminal updater not found"),
-                  QStringLiteral("system-updater was not found next to this app or in ~/.local/bin. Run install.sh first."));
+    if (m_check || m_update)
+        return;
+
+    if (m_updateScript.isEmpty()) {
+        showError(QStringLiteral("Updater not found"),
+                  QStringLiteral("update-all.sh was not found next to this app or in ~/.local/bin. Run install.sh first."));
         return;
     }
 
-    const bool started = QProcess::startDetached(m_terminalUpdater, QStringList());
-    if (!started) {
-        showError(QStringLiteral("Could not start the updater"),
-                  QStringLiteral("Tried to run:\n%1").arg(m_terminalUpdater));
+    if (!ensureAskpass() || m_askpassPath.isEmpty()) {
+        showError(QStringLiteral("No password dialog available"),
+                  QStringLiteral("Maid AU could not find or create a graphical sudo password helper. "
+                                 "Install ksshaskpass or ssh-askpass, then try again."));
         return;
     }
 
-    appendOutput(QStringLiteral("\nStarted the terminal updater: %1\n").arg(m_terminalUpdater));
-    setStatus(QStringLiteral("Update opened in a terminal"),
-              QStringLiteral("The terminal handles sudo and shows live progress. Run Check again when it finishes."),
+    m_updateCancelled = false;
+    m_updateBuffer.clear();
+    m_output->clear();
+    appendOutput(QStringLiteral("Running: %1\n\n").arg(m_updateScript));
+    appendOutput(QStringLiteral("Updates run inside this window. If sudo needs a password, "
+                                "a graphical dialog will appear.\n\n"));
+
+    m_updating = true;
+    setBusy(true);
+    setStatus(QStringLiteral("Updating..."),
+              QStringLiteral("Keep this window open. The administrator password dialog may appear; live output is shown below."),
               QStringLiteral("system-software-update"));
-    statusBar()->showMessage(QStringLiteral("Update started in a terminal"), 8000);
+    statusBar()->showMessage(QStringLiteral("Updating..."));
+
+    m_update = new QProcess(this);
+    m_update->setProcessChannelMode(QProcess::MergedChannels);
+    m_update->setWorkingDirectory(QDir::homePath());
+
+    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+    env.insert(QStringLiteral("UPDATE_NO_NOTIFY"), QStringLiteral("1"));
+    env.insert(QStringLiteral("MAID_AU_GUI"), QStringLiteral("1"));
+    env.insert(QStringLiteral("SUDO_ASKPASS"), m_askpassPath);
+    m_update->setProcessEnvironment(env);
+
+    connect(m_update, &QProcess::readyReadStandardOutput,
+            this, &MainWindow::readUpdateOutput);
+    connect(m_update, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            this, &MainWindow::updateFinished);
+    connect(m_update, &QProcess::errorOccurred,
+            this, &MainWindow::updateFailed);
+
+    m_update->start(m_updateScript, QStringList());
+    m_update->closeWriteChannel();
+}
+
+void MainWindow::readUpdateOutput()
+{
+    if (!m_update)
+        return;
+    const QByteArray chunk = m_update->readAllStandardOutput();
+    if (chunk.isEmpty())
+        return;
+    m_updateBuffer += chunk;
+    appendOutput(QString::fromLocal8Bit(chunk));
+}
+
+void MainWindow::updateFinished(int exitCode, QProcess::ExitStatus status)
+{
+    if (!m_update)
+        return;
+
+    const QByteArray tail = m_update->readAllStandardOutput();
+    if (!tail.isEmpty()) {
+        m_updateBuffer += tail;
+        appendOutput(QString::fromLocal8Bit(tail));
+    }
+
+    m_update->deleteLater();
+    m_update = nullptr;
+    m_updating = false;
+    setBusy(false);
+    loadLastUpdate();
+
+    const QString output = QString::fromLocal8Bit(m_updateBuffer);
+    const QRegularExpression summary(
+        QStringLiteral("=== done \\(([^)]*)\\): failed=(\\d+) updated=(\\d+) important=(\\d+) ==="));
+    const QRegularExpressionMatch match = summary.match(output);
+    const bool failed = (status != QProcess::NormalExit) || exitCode != 0
+        || (match.hasMatch() && match.captured(2).toInt() != 0);
+    const int updated = match.hasMatch() ? match.captured(3).toInt() : -1;
+
+    if (m_updateCancelled) {
+        setStatus(QStringLiteral("Update stopped"),
+                  QStringLiteral("The update process was stopped. Open the log to see what finished."),
+                  QStringLiteral("dialog-warning"));
+    } else if (failed) {
+        setStatus(QStringLiteral("Update finished with errors"),
+                  QStringLiteral("One or more steps failed. Read the details below or open the log; the system is not half-upgraded by a single failed dry run, but a failed package transaction should be checked."),
+                  QStringLiteral("dialog-error"));
+        QApplication::alert(this);
+    } else if (updated == 0) {
+        setStatus(QStringLiteral("Already up to date"),
+                  QStringLiteral("No packages, Flatpak apps, firmware, controllers, or Maid repos needed updating."),
+                  QStringLiteral("emblem-default"));
+    } else {
+        QString detail = QStringLiteral("Packages, Flatpak, firmware, controllers, AppImages, and the Maid suite finished successfully.");
+        if (output.contains(QStringLiteral("reboot recommended"), Qt::CaseInsensitive))
+            detail += QStringLiteral(" Reboot recommended when convenient.");
+        setStatus(QStringLiteral("Update complete"), detail,
+                  QStringLiteral("software-update-available"));
+    }
+
+    statusBar()->showMessage(QStringLiteral("Ready"));
+    if (m_tray && !isVisible())
+        showTrayMessage(m_statusTitle->text(), m_statusDetail->text());
+}
+
+void MainWindow::updateFailed(QProcess::ProcessError error)
+{
+    if (!m_update)
+        return;
+
+    if (error != QProcess::FailedToStart)
+        return;
+
+    const QString message = QStringLiteral("Could not start %1. Check that it is executable.")
+                                .arg(m_updateScript);
+    m_update->deleteLater();
+    m_update = nullptr;
+    m_updating = false;
+    setBusy(false);
+    appendOutput(message + QLatin1Char('\n'));
+    setStatus(QStringLiteral("Update failed"), message, QStringLiteral("dialog-error"));
+    showError(QStringLiteral("Update failed"), message);
+}
+
+void MainWindow::quitRequested()
+{
+    if (m_update) {
+        QMessageBox::information(
+            this, QStringLiteral("Update in progress"),
+            QStringLiteral("Maid AU is still updating. Let it finish before quitting so the package transaction is not interrupted."));
+        return;
+    }
+    qApp->quit();
 }
 
 void MainWindow::openLog()
@@ -697,8 +820,10 @@ void MainWindow::showAbout()
             "<h3>Maid AU %1</h3>"
             "<p>One updater for everything on Linux: native packages, Flatpak, "
             "firmware, controllers, AppImages, and the Maid suite.</p>"
-            "<p>Checks are read-only. Updates run in a terminal so sudo and "
-            "live output stay visible. Snapshots are taken by the updater "
+            "<p>Checks are read-only. Updates run inside this window; sudo asks "
+            "for the administrator password with a graphical dialog, so no "
+            "terminal is needed. Live output stays visible below.</p>"
+            "<p>Snapshots are taken by the updater "
             "before and after the run when snapper or timeshift is available.</p>"
             "<p>MIT licensed. <a href=\"https://github.com/Maidware-Project/Maid-AU\">"
             "github.com/Maidware-Project/Maid-AU</a></p>")
@@ -714,6 +839,14 @@ void MainWindow::showError(const QString &title, const QString &message)
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
+    if (m_update) {
+        QMessageBox::information(
+            this, QStringLiteral("Update in progress"),
+            QStringLiteral("Maid AU is still updating. Keep it open until the update finishes."));
+        event->ignore();
+        return;
+    }
+
     if (m_tray) {
         hide();
         event->ignore();

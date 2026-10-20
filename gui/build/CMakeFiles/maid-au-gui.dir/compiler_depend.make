@@ -127,6 +127,7 @@ maid-au-gui_autogen/timestamp: /home/EXAMPLEUSER/Documents/GitHub/Maid\ AU/gui/C
   /usr/include/c++/16/bits/localefwd.h \
   /usr/include/c++/16/bits/memory_resource.h \
   /usr/include/c++/16/bits/memoryfwd.h \
+  /usr/include/c++/16/bits/monostate.h \
   /usr/include/c++/16/bits/move.h \
   /usr/include/c++/16/bits/nested_exception.h \
   /usr/include/c++/16/bits/new_allocator.h \
@@ -224,6 +225,8 @@ maid-au-gui_autogen/timestamp: /home/EXAMPLEUSER/Documents/GitHub/Maid\ AU/gui/C
   /usr/include/c++/16/numeric \
   /usr/include/c++/16/optional \
   /usr/include/c++/16/pstl/execution_defs.h \
+  /usr/include/c++/16/pstl/glue_algorithm_defs.h \
+  /usr/include/c++/16/pstl/glue_memory_defs.h \
   /usr/include/c++/16/pstl/glue_numeric_defs.h \
   /usr/include/c++/16/pstl/pstl_config.h \
   /usr/include/c++/16/ratio \
@@ -279,6 +282,7 @@ maid-au-gui_autogen/timestamp: /home/EXAMPLEUSER/Documents/GitHub/Maid\ AU/gui/C
   /usr/include/linux/types.h \
   /usr/include/locale.h \
   /usr/include/pthread.h \
+  /usr/include/qt6/QtCore/QByteArray \
   /usr/include/qt6/QtCore/QProcess \
   /usr/include/qt6/QtCore/QSettings \
   /usr/include/qt6/QtCore/QString \
@@ -989,6 +993,7 @@ CMakeFiles/maid-au-gui.dir/maid-au-gui_autogen/mocs_compilation.cpp.o: maid-au-g
   /usr/include/locale.h \
   /usr/include/math.h \
   /usr/include/pthread.h \
+  /usr/include/qt6/QtCore/QByteArray \
   /usr/include/qt6/QtCore/QProcess \
   /usr/include/qt6/QtCore/QSettings \
   /usr/include/qt6/QtCore/QString \
@@ -1471,11 +1476,13 @@ CMakeFiles/maid-au-gui.dir/src/main.cpp.o: /home/EXAMPLEUSER/Documents/GitHub/Ma
   /usr/include/locale.h \
   /usr/include/math.h \
   /usr/include/pthread.h \
+  /usr/include/qt6/QtCore/QByteArray \
   /usr/include/qt6/QtCore/QCommandLineOption \
   /usr/include/qt6/QtCore/QCommandLineParser \
   /usr/include/qt6/QtCore/QProcess \
   /usr/include/qt6/QtCore/QSettings \
   /usr/include/qt6/QtCore/QString \
+  /usr/include/qt6/QtCore/QTextStream \
   /usr/include/qt6/QtCore/QTimer \
   /usr/include/qt6/QtCore/q17memory.h \
   /usr/include/qt6/QtCore/q20bit.h \
@@ -1614,6 +1621,7 @@ CMakeFiles/maid-au-gui.dir/src/main.cpp.o: /home/EXAMPLEUSER/Documents/GitHub/Ma
   /usr/include/qt6/QtCore/qtversionchecks.h \
   /usr/include/qt6/QtCore/qtypeinfo.h \
   /usr/include/qt6/QtCore/qtypes.h \
+  /usr/include/qt6/QtCore/qurl.h \
   /usr/include/qt6/QtCore/qutf8stringview.h \
   /usr/include/qt6/QtCore/qvariant.h \
   /usr/include/qt6/QtCore/qvarlengtharray.h \
@@ -1638,22 +1646,34 @@ CMakeFiles/maid-au-gui.dir/src/main.cpp.o: /home/EXAMPLEUSER/Documents/GitHub/Ma
   /usr/include/qt6/QtGui/qkeysequence.h \
   /usr/include/qt6/QtGui/qpaintdevice.h \
   /usr/include/qt6/QtGui/qpalette.h \
+  /usr/include/qt6/QtGui/qpen.h \
   /usr/include/qt6/QtGui/qpixelformat.h \
   /usr/include/qt6/QtGui/qpixmap.h \
   /usr/include/qt6/QtGui/qpolygon.h \
   /usr/include/qt6/QtGui/qregion.h \
   /usr/include/qt6/QtGui/qrgb.h \
   /usr/include/qt6/QtGui/qrgba64.h \
+  /usr/include/qt6/QtGui/qtextcursor.h \
+  /usr/include/qt6/QtGui/qtextdocument.h \
+  /usr/include/qt6/QtGui/qtextformat.h \
+  /usr/include/qt6/QtGui/qtextoption.h \
   /usr/include/qt6/QtGui/qtgui-config.h \
   /usr/include/qt6/QtGui/qtguiexports.h \
   /usr/include/qt6/QtGui/qtguiglobal.h \
   /usr/include/qt6/QtGui/qtransform.h \
   /usr/include/qt6/QtGui/qwindowdefs.h \
   /usr/include/qt6/QtWidgets/QApplication \
+  /usr/include/qt6/QtWidgets/QDialog \
+  /usr/include/qt6/QtWidgets/QInputDialog \
+  /usr/include/qt6/QtWidgets/QLineEdit \
   /usr/include/qt6/QtWidgets/QMainWindow \
   /usr/include/qt6/QtWidgets/QStyle \
   /usr/include/qt6/QtWidgets/QSystemTrayIcon \
   /usr/include/qt6/QtWidgets/qapplication.h \
+  /usr/include/qt6/QtWidgets/qdialog.h \
+  /usr/include/qt6/QtWidgets/qframe.h \
+  /usr/include/qt6/QtWidgets/qinputdialog.h \
+  /usr/include/qt6/QtWidgets/qlineedit.h \
   /usr/include/qt6/QtWidgets/qmainwindow.h \
   /usr/include/qt6/QtWidgets/qsizepolicy.h \
   /usr/include/qt6/QtWidgets/qstyle.h \
@@ -2005,6 +2025,7 @@ CMakeFiles/maid-au-gui.dir/src/mainwindow.cpp.o: /home/EXAMPLEUSER/Documents/Git
   /usr/include/locale.h \
   /usr/include/math.h \
   /usr/include/pthread.h \
+  /usr/include/qt6/QtCore/QByteArray \
   /usr/include/qt6/QtCore/QDateTime \
   /usr/include/qt6/QtCore/QDir \
   /usr/include/qt6/QtCore/QFile \
@@ -2247,6 +2268,7 @@ CMakeFiles/maid-au-gui.dir/src/mainwindow.cpp.o: /home/EXAMPLEUSER/Documents/Git
   /usr/include/qt6/QtWidgets/QPushButton \
   /usr/include/qt6/QtWidgets/QScrollBar \
   /usr/include/qt6/QtWidgets/QStatusBar \
+  /usr/include/qt6/QtWidgets/QStyle \
   /usr/include/qt6/QtWidgets/QSystemTrayIcon \
   /usr/include/qt6/QtWidgets/QVBoxLayout \
   /usr/include/qt6/QtWidgets/qabstractbutton.h \
@@ -2272,6 +2294,7 @@ CMakeFiles/maid-au-gui.dir/src/mainwindow.cpp.o: /home/EXAMPLEUSER/Documents/Git
   /usr/include/qt6/QtWidgets/qscrollbar.h \
   /usr/include/qt6/QtWidgets/qsizepolicy.h \
   /usr/include/qt6/QtWidgets/qstatusbar.h \
+  /usr/include/qt6/QtWidgets/qstyle.h \
   /usr/include/qt6/QtWidgets/qsystemtrayicon.h \
   /usr/include/qt6/QtWidgets/qtabwidget.h \
   /usr/include/qt6/QtWidgets/qtextedit.h \
@@ -2420,8 +2443,6 @@ maid-au-gui: /lib64/ld-linux-x86-64.so.2 \
 
 /usr/include/qt6/QtWidgets/qgridlayout.h:
 
-/usr/include/qt6/QtWidgets/qdialog.h:
-
 /usr/include/qt6/QtWidgets/qboxlayout.h:
 
 /usr/include/qt6/QtWidgets/qabstractscrollarea.h:
@@ -2444,8 +2465,6 @@ maid-au-gui: /lib64/ld-linux-x86-64.so.2 \
 
 /usr/include/qt6/QtGui/qrawfont.h:
 
-/usr/include/qt6/QtGui/qpen.h:
-
 /usr/include/qt6/QtGui/qinputdevice.h:
 
 /usr/include/qt6/QtGui/qglyphrun.h:
@@ -2460,17 +2479,11 @@ maid-au-gui: /lib64/ld-linux-x86-64.so.2 \
 
 /usr/include/qt6/QtGui/QFontDatabase:
 
-/usr/include/qt6/QtGui/qtextdocument.h:
-
-/usr/include/qt6/QtGui/QDesktopServices:
-
 /usr/lib64/gcc/x86_64-suse-linux/16/libgcc.a:
 
 /usr/include/qt6/QtGui/QCloseEvent:
 
 /usr/include/qt6/QtGui/QAction:
-
-/usr/include/qt6/QtCore/qurl.h:
 
 /usr/include/qt6/QtCore/qstandardpaths.h:
 
@@ -2538,19 +2551,37 @@ maid-au-gui: /lib64/ld-linux-x86-64.so.2 \
 
 /usr/include/c++/16/bits/codecvt.h:
 
+/usr/include/qt6/QtWidgets/qinputdialog.h:
+
+/usr/include/qt6/QtWidgets/qdialog.h:
+
 /usr/include/qt6/QtWidgets/qapplication.h:
 
 /usr/include/qt6/QtWidgets/QStyle:
 
+/usr/include/qt6/QtWidgets/QLineEdit:
+
+/usr/include/qt6/QtWidgets/QInputDialog:
+
+/usr/include/qt6/QtWidgets/QDialog:
+
 /usr/lib64/libdouble-conversion.so.3:
 
 /usr/include/qt6/QtWidgets/QApplication:
+
+/usr/include/qt6/QtGui/QDesktopServices:
+
+/usr/include/qt6/QtGui/qtextdocument.h:
+
+/usr/include/qt6/QtGui/qpen.h:
 
 /usr/include/qt6/QtGui/qinputmethod.h:
 
 /usr/include/qt6/QtGui/qguiapplication_platform.h:
 
 /usr/include/qt6/QtGui/qguiapplication.h:
+
+/usr/include/qt6/QtCore/qurl.h:
 
 /usr/include/qt6/QtCore/qtimer.h:
 
@@ -2574,6 +2605,8 @@ maid-au-gui: /lib64/ld-linux-x86-64.so.2 \
 
 /usr/include/qt6/QtCore/QTimer:
 
+/usr/include/qt6/QtCore/QTextStream:
+
 /usr/include/qt6/QtCore/QCommandLineOption:
 
 /usr/lib64/gcc/x86_64-suse-linux/16/include/syslimits.h:
@@ -2583,10 +2616,6 @@ maid-au-gui: /lib64/ld-linux-x86-64.so.2 \
 /usr/include/math.h:
 
 /usr/include/c++/16/stdlib.h:
-
-/usr/include/c++/16/bits/basic_ios.tcc:
-
-/usr/include/c++/16/pstl/glue_algorithm_defs.h:
 
 /usr/include/bits/stdlib-bsearch.h:
 
@@ -2844,7 +2873,7 @@ CMakeFiles/maid-au-gui.dir/maid-au-gui_autogen/mocs_compilation.cpp.o:
 
 /usr/lib64/cmake/Qt6DBus/Qt6DBusTargetsPrecheck.cmake:
 
-/usr/include/c++/16/ext/numeric_traits.h:
+/usr/lib64/cmake/Qt6DBus/Qt6DBusDependencies.cmake:
 
 /usr/include/c++/16/version:
 
@@ -2873,6 +2902,12 @@ CMakeFiles/maid-au-gui.dir/maid-au-gui_autogen/mocs_compilation.cpp.o:
 /usr/include/qt6/QtGui/qfontinfo.h:
 
 /usr/include/c++/16/tr1/legendre_function.tcc:
+
+/usr/lib64/cmake/Qt6DBus/Qt6DBusVersionlessAliasTargets.cmake:
+
+/usr/lib64/cmake/Qt6DBus/Qt6DBusTargets-relwithdebinfo.cmake:
+
+/usr/include/qt6/QtCore/qdebug.h:
 
 /usr/include/c++/16/tr1/gamma.tcc:
 
@@ -2948,6 +2983,10 @@ CMakeFiles/4.4.4/CMakeSystem.cmake:
 
 /usr/include/c++/16/bits/unordered_map.h:
 
+/usr/include/c++/16/bits/basic_ios.tcc:
+
+/usr/include/c++/16/pstl/glue_algorithm_defs.h:
+
 /usr/include/qt6/QtGui/qabstracttextdocumentlayout.h:
 
 /usr/include/asm-generic/int-ll64.h:
@@ -2963,8 +3002,6 @@ CMakeFiles/4.4.4/CMakeSystem.cmake:
 /usr/include/c++/16/cstdio:
 
 /usr/include/c++/16/cstdint:
-
-/usr/include/c++/16/cstddef:
 
 /usr/include/qt6/QtWidgets/QVBoxLayout:
 
@@ -2991,12 +3028,6 @@ CMakeFiles/4.4.4/CMakeSystem.cmake:
 /usr/include/qt6/QtWidgets/qwidget.h:
 
 /usr/include/c++/16/limits:
-
-/usr/include/c++/16/bits/monostate.h:
-
-/usr/share/cmake/Modules/Compiler/SCO-DetermineCompiler.cmake:
-
-/usr/include/c++/16/bits/align.h:
 
 /usr/include/qt6/QtCore/qbasictimer.h:
 
@@ -3067,6 +3098,8 @@ maid-au-gui_autogen/mocs_compilation.cpp:
 /usr/include/c++/16/bits/stl_relops.h:
 
 /usr/include/c++/16/bits/stl_iterator_base_types.h:
+
+/usr/include/c++/16/ext/numeric_traits.h:
 
 /usr/include/c++/16/bits/uses_allocator.h:
 
@@ -3149,6 +3182,10 @@ maid-au-gui_autogen/mocs_compilation.cpp:
 /usr/include/qt6/QtCore/qfunctionpointer.h:
 
 /usr/lib64/cmake/Qt6/QtFeature.cmake:
+
+/usr/include/c++/16/bits/move.h:
+
+/usr/include/qt6/QtCore/qbasicatomic.h:
 
 /usr/include/qt6/QtGui/qvectornd.h:
 
@@ -3253,6 +3290,12 @@ maid-au-gui_autogen/mocs_compilation.cpp:
 /usr/lib64/cmake/Qt6/QtPublicWindowsHelpers.cmake:
 
 /usr/include/c++/16/functional:
+
+/usr/include/qt6/QtGui/qtextcursor.h:
+
+/usr/lib64/cmake/Qt6DBus/Qt6DBusTargets.cmake:
+
+/usr/include/c++/16/climits:
 
 /usr/lib64/cmake/Qt6GuiTools/Qt6GuiToolsAdditionalTargetInfo.cmake:
 
@@ -3403,12 +3446,6 @@ CMakeFiles/4.4.4/CMakeCXXCompiler.cmake:
 /usr/lib64/libQt6Widgets.so.6.11.2:
 
 /usr/include/bits/types/time_t.h:
-
-/usr/lib64/cmake/Qt6DBus/Qt6DBusVersionlessAliasTargets.cmake:
-
-/usr/include/qt6/QtCore/qdebug.h:
-
-/usr/lib64/cmake/Qt6DBus/Qt6DBusTargets-relwithdebinfo.cmake:
 
 /lib64/libc.so.6:
 
@@ -3676,11 +3713,17 @@ CMakeFiles/maid-au-gui.dir/src/mainwindow.cpp.o:
 
 /usr/include/c++/16/bits/locale_classes.tcc:
 
-/usr/include/c++/16/bits/move.h:
+/usr/include/c++/16/cstddef:
 
-/usr/include/qt6/QtCore/qbasicatomic.h:
+/usr/share/cmake/Modules/Compiler/SCO-DetermineCompiler.cmake:
+
+/usr/include/c++/16/bits/align.h:
+
+/usr/include/c++/16/bits/monostate.h:
 
 /usr/include/c++/16/x86_64-suse-linux/bits/cpu_defines.h:
+
+/usr/include/qt6/QtCore/QByteArray:
 
 /usr/include/qt6/QtCore/qstringtokenizer.h:
 
@@ -3735,6 +3778,12 @@ CMakeFiles/maid-au-gui.dir/src/mainwindow.cpp.o:
 /usr/include/qt6/QtCore/q20utility.h:
 
 /usr/include/qt6/QtCore/q23type_traits.h:
+
+/usr/lib64/cmake/Qt6DBus/Qt6DBusMacros.cmake:
+
+/usr/include/qt6/QtGui/qwindowdefs.h:
+
+/usr/include/qt6/QtCore/qalgorithms.h:
 
 /usr/include/qt6/QtCore/qalloc.h:
 
@@ -3879,12 +3928,6 @@ CMakeFiles/maid-au-gui.dir/src/main.cpp.o:
 /usr/include/limits.h:
 
 /usr/include/qt6/QtCore/qobjectdefs.h:
-
-/usr/include/qt6/QtGui/qwindowdefs.h:
-
-/usr/include/qt6/QtCore/qalgorithms.h:
-
-/usr/lib64/cmake/Qt6DBus/Qt6DBusMacros.cmake:
 
 /usr/include/qt6/QtCore/qobjectdefs_impl.h:
 
@@ -4033,6 +4076,8 @@ CMakeFiles/maid-au-gui.dir/src/main.cpp.o:
 /usr/include/c++/16/optional:
 
 /usr/include/qt6/QtGui/qtguiexports.h:
+
+/usr/include/qt6/QtWidgets/qlineedit.h:
 
 /usr/include/qt6/QtGui/qfont.h:
 
@@ -4193,11 +4238,3 @@ CMakeFiles/maid-au-gui.dir/src/main.cpp.o:
 /usr/lib64/cmake/Qt6/QtPublicPluginHelpers.cmake:
 
 /usr/lib64/cmake/Qt6DBus/Qt6DBusConfig.cmake:
-
-/usr/lib64/cmake/Qt6DBus/Qt6DBusDependencies.cmake:
-
-/usr/include/qt6/QtGui/qtextcursor.h:
-
-/usr/include/c++/16/climits:
-
-/usr/lib64/cmake/Qt6DBus/Qt6DBusTargets.cmake:

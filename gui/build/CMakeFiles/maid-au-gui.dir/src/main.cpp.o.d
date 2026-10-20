@@ -2,9 +2,16 @@ CMakeFiles/maid-au-gui.dir/src/main.cpp.o: \
  /home/EXAMPLEUSER/Documents/GitHub/Maid\ AU/gui/src/main.cpp \
  /usr/include/stdc-predef.h \
  /home/EXAMPLEUSER/Documents/GitHub/Maid\ AU/gui/src/mainwindow.h \
- /usr/include/qt6/QtGui/QIcon /usr/include/qt6/QtGui/qicon.h \
- /usr/include/qt6/QtGui/qtguiglobal.h /usr/include/qt6/QtCore/qglobal.h \
- /usr/include/c++/16/type_traits \
+ /usr/include/qt6/QtCore/QByteArray /usr/include/qt6/QtCore/qbytearray.h \
+ /usr/include/qt6/QtCore/qrefcount.h /usr/include/qt6/QtCore/qatomic.h \
+ /usr/include/qt6/QtCore/qbasicatomic.h \
+ /usr/include/qt6/QtCore/qatomic_cxx11.h \
+ /usr/include/qt6/QtCore/qgenericatomic.h \
+ /usr/include/qt6/QtCore/qcompilerdetection.h \
+ /usr/include/qt6/QtCore/qprocessordetection.h \
+ /usr/include/qt6/QtCore/qsystemdetection.h \
+ /usr/include/qt6/QtCore/qtconfiginclude.h /usr/include/c++/16/version \
+ /usr/include/c++/16/bits/version.h \
  /usr/include/c++/16/x86_64-suse-linux/bits/c++config.h \
  /usr/include/bits/wordsize.h \
  /usr/include/c++/16/x86_64-suse-linux/bits/os_defines.h \
@@ -13,37 +20,38 @@ CMakeFiles/maid-au-gui.dir/src/main.cpp.o: \
  /usr/include/bits/long-double.h /usr/include/gnu/stubs.h \
  /usr/include/gnu/stubs-64.h \
  /usr/include/c++/16/x86_64-suse-linux/bits/cpu_defines.h \
- /usr/include/c++/16/pstl/pstl_config.h \
- /usr/include/c++/16/bits/version.h /usr/include/c++/16/cstddef \
+ /usr/include/c++/16/pstl/pstl_config.h /usr/include/qt6/QtCore/qconfig.h \
+ /usr/include/qt6/QtCore/qtcore-config.h /usr/include/c++/16/utility \
+ /usr/include/c++/16/bits/stl_relops.h \
+ /usr/include/c++/16/bits/stl_pair.h /usr/include/c++/16/type_traits \
+ /usr/include/c++/16/bits/move.h /usr/include/c++/16/bits/utility.h \
+ /usr/include/c++/16/initializer_list \
+ /usr/include/qt6/QtCore/qtconfigmacros.h \
+ /usr/include/qt6/QtCore/qtdeprecationdefinitions.h \
+ /usr/include/qt6/QtCore/qtversionchecks.h /usr/include/assert.h \
+ /usr/include/qt6/QtCore/qtypes.h /usr/include/qt6/QtCore/qassert.h \
+ /usr/include/qt6/QtCore/qtcoreexports.h \
+ /usr/include/qt6/QtCore/qtdeprecationmarkers.h \
+ /usr/include/qt6/QtCore/qtclasshelpermacros.h \
+ /usr/include/qt6/QtCore/qtnoop.h /usr/include/c++/16/cstddef \
  /usr/lib64/gcc/x86_64-suse-linux/16/include/stddef.h \
- /usr/include/c++/16/utility /usr/include/c++/16/bits/stl_relops.h \
- /usr/include/c++/16/bits/stl_pair.h /usr/include/c++/16/bits/move.h \
- /usr/include/c++/16/bits/utility.h /usr/include/c++/16/initializer_list \
  /usr/include/c++/16/cstdint \
  /usr/lib64/gcc/x86_64-suse-linux/16/include/stdint.h \
  /usr/include/stdint.h /usr/include/bits/libc-header-start.h \
  /usr/include/bits/types.h /usr/include/bits/typesizes.h \
  /usr/include/bits/time64.h /usr/include/bits/wchar.h \
  /usr/include/bits/stdint-intn.h /usr/include/bits/stdint-uintn.h \
- /usr/include/bits/stdint-least.h /usr/include/assert.h \
+ /usr/include/bits/stdint-least.h /usr/include/qt6/QtCore/qyieldcpu.h \
+ /usr/include/c++/16/atomic /usr/include/c++/16/bits/atomic_base.h \
+ /usr/include/c++/16/new /usr/include/c++/16/bits/exception.h \
+ /usr/include/c++/16/bits/new_except.h \
+ /usr/include/c++/16/bits/exception_defines.h \
+ /usr/include/c++/16/bits/atomic_lockfree_defines.h \
+ /usr/include/qt6/QtCore/qnamespace.h /usr/include/qt6/QtCore/qglobal.h \
  /usr/lib64/gcc/x86_64-suse-linux/16/include/stdbool.h \
  /usr/include/qt6/QtCore/qtcoreglobal.h \
- /usr/include/qt6/QtCore/qtversionchecks.h \
- /usr/include/qt6/QtCore/qtconfiginclude.h /usr/include/c++/16/version \
- /usr/include/qt6/QtCore/qconfig.h \
- /usr/include/qt6/QtCore/qtcore-config.h \
- /usr/include/qt6/QtCore/qtconfigmacros.h \
- /usr/include/qt6/QtCore/qtdeprecationdefinitions.h \
- /usr/include/qt6/QtCore/qcompilerdetection.h \
- /usr/include/qt6/QtCore/qprocessordetection.h \
- /usr/include/qt6/QtCore/qsystemdetection.h \
- /usr/include/qt6/QtCore/qtcoreexports.h \
- /usr/include/qt6/QtCore/qtdeprecationmarkers.h \
- /usr/include/qt6/QtCore/qtclasshelpermacros.h \
  /usr/include/qt6/QtCore/qtpreprocessorsupport.h \
- /usr/include/qt6/QtCore/qassert.h /usr/include/qt6/QtCore/qtnoop.h \
- /usr/include/qt6/QtCore/qtypes.h /usr/include/qt6/QtCore/qtversion.h \
- /usr/include/qt6/QtCore/qtypeinfo.h \
+ /usr/include/qt6/QtCore/qtversion.h /usr/include/qt6/QtCore/qtypeinfo.h \
  /usr/include/qt6/QtCore/qcontainerfwd.h /usr/include/c++/16/limits \
  /usr/include/qt6/QtCore/qsysinfo.h /usr/include/qt6/QtCore/qlogging.h \
  /usr/include/qt6/QtCore/qflags.h /usr/include/qt6/QtCore/qcompare_impl.h \
@@ -64,10 +72,7 @@ CMakeFiles/maid-au-gui.dir/src/main.cpp.o: \
  /usr/include/c++/16/bits/algorithmfwd.h \
  /usr/include/c++/16/bits/stl_heap.h \
  /usr/include/c++/16/bits/uniform_int_dist.h \
- /usr/include/c++/16/bits/stl_tempbuf.h /usr/include/c++/16/new \
- /usr/include/c++/16/bits/exception.h \
- /usr/include/c++/16/bits/new_except.h \
- /usr/include/c++/16/bits/exception_defines.h \
+ /usr/include/c++/16/bits/stl_tempbuf.h \
  /usr/include/c++/16/bits/stl_construct.h /usr/include/c++/16/cstdlib \
  /usr/include/stdlib.h /usr/include/bits/waitflags.h \
  /usr/include/bits/waitstatus.h /usr/include/bits/floatn.h \
@@ -90,12 +95,6 @@ CMakeFiles/maid-au-gui.dir/src/main.cpp.o: \
  /usr/include/c++/16/bits/std_abs.h \
  /usr/include/c++/16/pstl/glue_algorithm_defs.h \
  /usr/include/c++/16/pstl/execution_defs.h \
- /usr/include/qt6/QtCore/qatomic.h /usr/include/qt6/QtCore/qbasicatomic.h \
- /usr/include/qt6/QtCore/qatomic_cxx11.h \
- /usr/include/qt6/QtCore/qgenericatomic.h \
- /usr/include/qt6/QtCore/qyieldcpu.h /usr/include/c++/16/atomic \
- /usr/include/c++/16/bits/atomic_base.h \
- /usr/include/c++/16/bits/atomic_lockfree_defines.h \
  /usr/include/qt6/QtCore/qconstructormacros.h \
  /usr/include/qt6/QtCore/qdarwinhelpers.h \
  /usr/include/qt6/QtCore/qexceptionhandling.h \
@@ -143,9 +142,6 @@ CMakeFiles/maid-au-gui.dir/src/main.cpp.o: \
  /usr/include/qt6/QtCore/qtresource.h \
  /usr/include/qt6/QtCore/qttranslation.h \
  /usr/include/qt6/QtCore/qversiontagging.h \
- /usr/include/qt6/QtGui/qtgui-config.h \
- /usr/include/qt6/QtGui/qtguiexports.h /usr/include/qt6/QtCore/qsize.h \
- /usr/include/qt6/QtCore/qcheckedint_impl.h \
  /usr/include/qt6/QtCore/qcompare.h \
  /usr/include/qt6/QtCore/qstdlibdetection.h \
  /usr/include/qt6/QtCore/qcomparehelpers.h /usr/include/c++/16/functional \
@@ -171,12 +167,7 @@ CMakeFiles/maid-au-gui.dir/src/main.cpp.o: \
  /usr/include/c++/16/bits/stl_vector.h \
  /usr/include/c++/16/bits/stl_bvector.h \
  /usr/include/c++/16/bits/vector.tcc /usr/include/c++/16/array \
- /usr/include/c++/16/compare /usr/include/qt6/QtCore/qhashfunctions.h \
- /usr/include/qt6/QtCore/qstring.h /usr/include/qt6/QtCore/qchar.h \
- /usr/include/qt6/QtCore/qstringview.h \
- /usr/include/qt6/QtCore/qbytearray.h /usr/include/qt6/QtCore/qrefcount.h \
- /usr/include/qt6/QtCore/qnamespace.h \
- /usr/include/qt6/QtCore/qtmetamacros.h \
+ /usr/include/c++/16/compare /usr/include/qt6/QtCore/qtmetamacros.h \
  /usr/include/qt6/QtCore/qarraydata.h /usr/include/qt6/QtCore/qpair.h \
  /usr/include/string.h /usr/include/strings.h \
  /usr/include/qt6/QtCore/qarraydatapointer.h \
@@ -254,6 +245,14 @@ CMakeFiles/maid-au-gui.dir/src/main.cpp.o: \
  /usr/include/qt6/QtCore/qbytearrayalgorithms.h \
  /usr/include/qt6/QtCore/qbytearrayview.h \
  /usr/include/qt6/QtCore/qstringfwd.h /usr/include/c++/16/stdlib.h \
+ /usr/include/qt6/QtGui/QIcon /usr/include/qt6/QtGui/qicon.h \
+ /usr/include/qt6/QtGui/qtguiglobal.h \
+ /usr/include/qt6/QtGui/qtgui-config.h \
+ /usr/include/qt6/QtGui/qtguiexports.h /usr/include/qt6/QtCore/qsize.h \
+ /usr/include/qt6/QtCore/qcheckedint_impl.h \
+ /usr/include/qt6/QtCore/qhashfunctions.h \
+ /usr/include/qt6/QtCore/qstring.h /usr/include/qt6/QtCore/qchar.h \
+ /usr/include/qt6/QtCore/qstringview.h \
  /usr/include/qt6/QtCore/qstringalgorithms.h \
  /usr/include/qt6/QtCore/qlatin1stringview.h \
  /usr/include/qt6/QtCore/qanystringview.h \
@@ -354,5 +353,14 @@ CMakeFiles/maid-au-gui.dir/src/main.cpp.o: \
  /usr/include/qt6/QtCore/qcommandlineoption.h \
  /usr/include/qt6/QtCore/QCommandLineParser \
  /usr/include/qt6/QtCore/qcommandlineparser.h \
- /usr/include/qt6/QtWidgets/QStyle /usr/include/qt6/QtWidgets/qstyle.h \
+ /usr/include/qt6/QtWidgets/QDialog /usr/include/qt6/QtWidgets/qdialog.h \
+ /usr/include/qt6/QtWidgets/QInputDialog \
+ /usr/include/qt6/QtWidgets/qinputdialog.h \
+ /usr/include/qt6/QtWidgets/qlineedit.h \
+ /usr/include/qt6/QtWidgets/qframe.h /usr/include/qt6/QtGui/qtextcursor.h \
+ /usr/include/qt6/QtGui/qtextdocument.h /usr/include/qt6/QtCore/qurl.h \
+ /usr/include/qt6/QtGui/qtextformat.h /usr/include/qt6/QtGui/qpen.h \
+ /usr/include/qt6/QtGui/qtextoption.h \
+ /usr/include/qt6/QtWidgets/QLineEdit /usr/include/qt6/QtWidgets/QStyle \
+ /usr/include/qt6/QtWidgets/qstyle.h /usr/include/qt6/QtCore/QTextStream \
  /usr/include/qt6/QtCore/QTimer /usr/include/qt6/QtCore/qtimer.h

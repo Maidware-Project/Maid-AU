@@ -331,7 +331,7 @@ cat > /tmp/maidau-u/stubs/xdg-terminal-exec <<'EOF'
 printf '%s\n' "$@" > /tmp/maidau-u/terminal-args
 exit 0
 EOF
-printf '#!/bin/bash\nexec "$@"\n' > /tmp/maidau-u/stubs/systemd-inhibit
+printf '#!/bin/bash\nwhile [ $# -gt 0 ]; do case "$1" in --what=*|--why=*|--mode=*|--who=*) shift ;; --) shift; break ;; *) break ;; esac; done\nexec "$@"\n' > /tmp/maidau-u/stubs/systemd-inhibit
 chmod +x /tmp/maidau-u/stubs/*
 PATH="/tmp/maidau-u/stubs:$PATH" HOME=/tmp/maidau-u \
   bash /tmp/maidau-u/bin/system-updater --last < /dev/null >/dev/null 2>&1

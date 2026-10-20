@@ -75,6 +75,9 @@ int main(int argc, char **argv)
     const QCommandLineOption checkOption(
         QStringLiteral("check"),
         QStringLiteral("Start a package check immediately."));
+    const QCommandLineOption updateOption(
+        QStringLiteral("update"),
+        QStringLiteral("Start an update immediately."));
     const QCommandLineOption trayOption(
         QStringLiteral("tray"),
         QStringLiteral("Start minimized to the system tray."));
@@ -86,6 +89,7 @@ int main(int argc, char **argv)
         QStringLiteral("Save a window screenshot and exit (testing)."),
         QStringLiteral("file"));
     parser.addOption(checkOption);
+    parser.addOption(updateOption);
     parser.addOption(trayOption);
     parser.addOption(quitAfterCheckOption);
     parser.addOption(screenshotOption);
@@ -102,6 +106,8 @@ int main(int argc, char **argv)
 
     if (parser.isSet(checkOption))
         QTimer::singleShot(0, &window, &MainWindow::startCheck);
+    else if (parser.isSet(updateOption))
+        QTimer::singleShot(0, &window, &MainWindow::startUpdate);
 
     if (parser.isSet(screenshotOption)) {
         const QString path = parser.value(screenshotOption);
