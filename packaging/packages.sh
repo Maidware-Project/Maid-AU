@@ -34,8 +34,10 @@ stage="$(mktemp -d)"
 cfg="$(mktemp)"
 trap 'rm -rf "$stage" "$cfg"' EXIT
 
-# one install into a staging dir - the same files the installer would place
-DESTDIR="$stage" bash "$root/install.sh" --prefix=/usr --no-packages --no-config >/dev/null
+# one install into a staging dir - the same files the installer would place.
+# --no-gui keeps these nfpm packages architecture-independent; the AUR
+# recipe and a normal install.sh run build the Qt6 GUI for the host arch.
+DESTDIR="$stage" bash "$root/install.sh" --prefix=/usr --no-packages --no-config --no-gui >/dev/null
 
 emit() { # emit <indent> <key> <space-separated values>
   local indent="$1" key="$2" values="${3:-}"

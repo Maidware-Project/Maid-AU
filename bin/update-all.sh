@@ -189,8 +189,13 @@ if [ ! -x "$GAMEPAD_HELPER" ]; then
   GAMEPAD_HELPER=$(command -v mod-gamepad.sh 2>/dev/null || true)
 fi
 
-# ---- sudo: passwordless preferred, interactive fallback ----
-if sudo -n true >/dev/null 2>&1; then
+# ---- sudo: passwordless preferred, graphical askpass for the GUI, then tty ----
+# The GUI sets MAID_AU_GUI=1 and SUDO_ASKPASS; sudo -A then asks through a
+# dialog instead of requiring a terminal. If credentials are cached, sudo
+# uses them without showing the dialog.
+if [ "${MAID_AU_GUI:-0}" = "1" ] && [ -n "${SUDO_ASKPASS:-}" ]; then
+  SUDO="sudo -A"
+elif sudo -n true >/dev/null 2>&1; then
   SUDO="sudo -n"
 elif [ -n "${PM_PROBE:-}" ] && sudo -n $PM_PROBE >/dev/null 2>&1; then
   # NOPASSWD covers just the package manager (e.g. zypper-only rule)
@@ -238,7 +243,7 @@ controllers_hook() {
     else
       CTRL_N=0
       # shellcheck disable=SC2024  # $TMP is user-owned: the redirect stays with the user
-      if sudo -n zypper --non-interactive list-updates >"$TMP" 2>&1; then
+      if $SUDO zypper --non-interactive list-updates >"$TMP" 2>&1; then
         if grep -qi "No updates found" "$TMP"; then
           log "check: controllers: none."
         else

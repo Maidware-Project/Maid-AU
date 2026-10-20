@@ -9,7 +9,7 @@ pm_name() { echo "dnf"; }
 pm_check() {
   ZYPPER_N=0; PACKMAN_N=0; SYS_HIT=0
   # shellcheck disable=SC2024  # $TMP is user-owned: the redirect stays with the user
-  sudo -n dnf check-update -q >"$TMP" 2>&1; rc=$?
+  $SUDO dnf check-update -q >"$TMP" 2>&1; rc=$?
   if [ "$rc" -eq 0 ]; then
     log "check: dnf: nothing to do."
   elif [ "$rc" -eq 100 ]; then

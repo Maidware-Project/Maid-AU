@@ -8,7 +8,7 @@ pm_name() { echo "zypper"; }
 pm_check() {
   ZYPPER_N=0; PACKMAN_N=0; SYS_HIT=0
   # shellcheck disable=SC2024  # $TMP is user-owned: the redirect stays with the user
-  if sudo -n zypper --non-interactive dist-upgrade --dry-run --no-confirm >"$TMP" 2>&1; then
+  if $SUDO zypper --non-interactive dist-upgrade --dry-run --no-confirm >"$TMP" 2>&1; then
     if grep -qi "Nothing to do" "$TMP"; then
       log "check: zypper: nothing to do."
     else
@@ -23,7 +23,7 @@ pm_check() {
   fi
 
   # shellcheck disable=SC2024  # $TMP is user-owned: the redirect stays with the user
-  if sudo -n zypper --non-interactive list-updates -r packman >"$TMP" 2>&1; then
+  if $SUDO zypper --non-interactive list-updates -r packman >"$TMP" 2>&1; then
     if grep -qi "No updates found" "$TMP"; then
       log "check: packman: none."
     else

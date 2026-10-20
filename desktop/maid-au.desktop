@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Maid AU
+Comment=One updater for everything: packages, Flatpak, firmware
+Exec=@HOME@/.local/bin/maid-au-gui
+TryExec=@HOME@/.local/bin/maid-au-gui
+Icon=software-update-available
+Terminal=false
+Type=Application
+Categories=System;
+Keywords=update;upgrade;updater;system;flatpak;firmware;
+StartupWMClass=maid-au-gui

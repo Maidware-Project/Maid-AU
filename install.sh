@@ -1,18 +1,21 @@
 #!/usr/bin/env bash
 # Universal installer: Arch (pacman), Debian/Ubuntu (apt), Fedora (dnf),
 # openSUSE (zypper). Copies files (no symlinks - survives folder moves).
-# Usage: ./install.sh [--check] [--no-packages] [--uninstall [--purge]]
-#          [--prefix=DIR] [--no-config]
+# Usage: ./install.sh [--check] [--no-packages] [--no-gui]
+#          [--uninstall [--purge]] [--prefix=DIR] [--no-config]
 # --prefix installs program files elsewhere (packaging: DESTDIR supported);
 # user setup is skipped for non-default prefixes and with --no-config.
+# The Qt6 GUI is built when cmake and Qt6 Widgets development files exist;
+# --no-gui keeps the terminal-only install.
 set -u
 PKGDIR="$(cd "$(dirname "$0")" && pwd)"
 BACKUP_TS="$(date +%Y%m%d-%H%M%S)"
-CHECK=0; NO_PKGS=0; UNINST=0; PURGE=0; NOCONFIG=0; PREFIX=""
+CHECK=0; NO_PKGS=0; UNINST=0; PURGE=0; NOCONFIG=0; PREFIX=""; NO_GUI=0
 for a in "$@"; do
   case "$a" in
     --check) CHECK=1 ;;
     --no-packages) NO_PKGS=1 ;;
+    --no-gui) NO_GUI=1 ;;
     --uninstall) UNINST=1 ;;
     --purge) PURGE=1 ;;
     --no-config) NOCONFIG=1 ;;
@@ -64,11 +67,12 @@ say "$(kde_env_line)"
 if [ "$UNINST" = "1" ]; then
   # program files come out of the same dirs the install used, so
   # --prefix/DESTDIR installs uninstall cleanly too.
-  rm -f "$BINDIR"/update-all.sh "$BINDIR"/system-updater \
+  rm -f "$BINDIR"/update-all.sh "$BINDIR"/system-updater "$BINDIR"/maid-au-gui \
     "$BINDIR"/pm-zypper.sh "$BINDIR"/pm-dnf.sh \
     "$BINDIR"/pm-pacman.sh "$BINDIR"/pm-apt.sh \
     "$BINDIR"/setup-controllers.sh "$BINDIR"/check-controllers.sh
-  rm -f "$SHAREDIR"/applications/system-updater.desktop
+  rm -f "$SHAREDIR"/applications/system-updater.desktop \
+    "$SHAREDIR"/applications/maid-au.desktop
   rm -rf "$SHAREDIR"/maid-au/patches
   if [ "$PURGE" = "1" ]; then
     rm -f "$HOME"/.config/maidau-appimages.conf "$HOME"/.local/share/update-all.log \
@@ -170,6 +174,44 @@ copy_one() {
   echo "installed $dest"
 }
 
+# The GUI is optional at build time: a terminal-only install still works
+# on machines without cmake or Qt6 development packages.
+GUI_INSTALLED=0
+build_gui() {
+  local src="$PKGDIR/gui" builddir jobs
+  [ -d "$src" ] || { warn "gui/ missing - GUI skipped"; return 0; }
+  if [ "$NO_GUI" = "1" ]; then
+    say "GUI skipped (--no-gui)"
+    return 0
+  fi
+  if [ "$CHECK" = "1" ]; then
+    GUI_INSTALLED=1
+    echo "BUILD $BINDIR/maid-au-gui (if cmake + Qt6 Widgets dev files are present)"
+    return 0
+  fi
+  if ! command -v cmake >/dev/null 2>&1; then
+    warn "GUI not built: cmake not found (terminal updater still installed)"
+    return 0
+  fi
+  builddir=$(mktemp -d) || return 0
+  jobs=$(nproc 2>/dev/null || echo 2)
+  say "building the Qt6 GUI..."
+  if cmake -S "$src" -B "$builddir" -DCMAKE_BUILD_TYPE=Release >/dev/null 2>&1 \
+     && cmake --build "$builddir" -j"$jobs" >/dev/null 2>&1 \
+     && [ -x "$builddir/maid-au-gui" ]; then
+    if install -m 0755 "$builddir/maid-au-gui" "$BINDIR/maid-au-gui"; then
+      say "installed $BINDIR/maid-au-gui"
+      GUI_INSTALLED=1
+    else
+      warn "could not install maid-au-gui"
+    fi
+  else
+    warn "GUI not built: install cmake and Qt6 Widgets development files"
+    warn "  openSUSE: qt6-base-devel | Arch: qt6-base | Fedora: qt6-qtbase-devel | Debian: qt6-base-dev"
+  fi
+  rm -rf "$builddir"
+}
+
 FAIL=0
 for f in "$PKGDIR"/bin/*; do
   [ -f "$f" ] || continue
@@ -177,6 +219,8 @@ for f in "$PKGDIR"/bin/*; do
     || { warn "could not install $(basename "$f")"; FAIL=1; }
 done
 [ "$CHECK" = "0" ] && chmod +x "$BINDIR"/update-all.sh "$BINDIR"/system-updater 2>/dev/null || true
+
+build_gui
 
 if [ "$PM" = "zypper" ]; then
   for f in "$PKGDIR"/controllers/*; do
@@ -191,8 +235,15 @@ fi
 
 for f in "$PKGDIR"/desktop/*.desktop; do
   [ -f "$f" ] || continue
-  copy_one "$f" "$SHAREDIR/applications/$(basename "$f")" "$REWRITE" \
-    || { warn "could not install $(basename "$f")"; FAIL=1; }
+  base=$(basename "$f")
+  # the GUI launcher only makes sense when the GUI binary is present
+  if [ "$base" = "maid-au.desktop" ] \
+     && [ "$GUI_INSTALLED" != "1" ] && [ ! -x "$BINDIR/maid-au-gui" ]; then
+    [ "$CHECK" = "1" ] && echo "SKIP $SHAREDIR/applications/$base (GUI not built)"
+    continue
+  fi
+  copy_one "$f" "$SHAREDIR/applications/$base" "$REWRITE" \
+    || { warn "could not install $base"; FAIL=1; }
 done
 
 # the kdeconnect early-login fix lives in Maid Helper's `kdeconnect`

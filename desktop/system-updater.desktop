@@ -1,6 +1,6 @@
 [Desktop Entry]
-Name=Maid AU
-Comment=One-button system update: packages, flatpak, firmware
+Name=Maid AU (Terminal)
+Comment=One-button system update in a terminal: packages, flatpak, firmware
 Exec=@HOME@/.local/bin/system-updater
 Icon=software-update-available
 Terminal=false

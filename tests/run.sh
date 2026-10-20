@@ -45,6 +45,29 @@ echo "$out" | grep -q "System update available" || fail "zypper sys-hit notify"
 grep -q "packman: 2" /tmp/maidau-t/.local/share/update-all.log || fail "packman logged"
 ok "zypper backend (incl. packman + kernel hit)"
 
+echo "== check failure is honest =="
+fresh_home
+mkdir -p /tmp/maidau-failstub
+cat > /tmp/maidau-failstub/zypper <<'EOF'
+#!/bin/bash
+case "$*" in
+  *dist-upgrade*--dry-run*) echo "Problem: the package manager cannot resolve this update"; exit 4 ;;
+  *list-updates*-r*packman*) echo "No updates found" ;;
+  *list-updates*) echo "No updates found" ;;
+  *refresh*) echo "All repositories have been refreshed." ;;
+  *) exit 0 ;;
+esac
+EOF
+chmod +x /tmp/maidau-failstub/zypper
+out=$(HOME=/tmp/maidau-t UPDATE_PM=zypper PATH="/tmp/maidau-failstub:$PATH" \
+  bash "$PKGDIR/bin/update-all.sh" --check < /dev/null 2>&1); rc=$?
+[ "$rc" -eq 1 ] || fail "check failure exit code $rc"
+echo "$out" | grep -q "failed=1" || fail "check failure summary missing: $out"
+echo "$out" | grep -q "Check failed - the package manager could not complete the preview" \
+  || fail "check failure message missing"
+ok "check failure exits 1 and says so"
+rm -rf /tmp/maidau-failstub
+
 echo "== dnf --check, exit 100 =="
 fresh_home
 out=$(HOME=/tmp/maidau-t UPDATE_PM=dnf DNF_RC=100 bash "$PKGDIR/bin/update-all.sh" --check < /dev/null 2>&1)
@@ -299,6 +322,47 @@ HOME=/tmp/maidau-t UPDATE_PM=pacman UPDATE_CONTROLLERS=1 bash "$PKGDIR/bin/updat
 grep -q "controllers: helper run ok" /tmp/maidau-t/.local/share/update-all.log || fail "helper run not logged"
 ok "controllers delegated to helper in update"
 rm -rf /tmp/maidau-t
+
+echo "== system-updater finds update-all next to itself =="
+rm -rf /tmp/maidau-u; mkdir -p /tmp/maidau-u/bin /tmp/maidau-u/stubs
+cp "$PKGDIR/bin/update-all.sh" "$PKGDIR/bin/system-updater" /tmp/maidau-u/bin/
+cat > /tmp/maidau-u/stubs/xdg-terminal-exec <<'EOF'
+#!/bin/bash
+printf '%s\n' "$@" > /tmp/maidau-u/terminal-args
+exit 0
+EOF
+printf '#!/bin/bash\nexec "$@"\n' > /tmp/maidau-u/stubs/systemd-inhibit
+chmod +x /tmp/maidau-u/stubs/*
+PATH="/tmp/maidau-u/stubs:$PATH" HOME=/tmp/maidau-u \
+  bash /tmp/maidau-u/bin/system-updater --last < /dev/null >/dev/null 2>&1
+[ "$(head -n1 /tmp/maidau-u/terminal-args 2>/dev/null)" = "/tmp/maidau-u/bin/update-all.sh" ] \
+  || fail "system-updater did not use the sibling update-all.sh"
+ok "system-updater resolves the packaged sibling path"
+rm -rf /tmp/maidau-u
+
+echo "== gui =="
+if command -v cmake >/dev/null 2>&1 && pkg-config --exists Qt6Widgets 2>/dev/null; then
+  rm -rf /tmp/maidau-gui-build
+  cmake -S "$PKGDIR/gui" -B /tmp/maidau-gui-build -DCMAKE_BUILD_TYPE=Release >/dev/null 2>&1 \
+    && cmake --build /tmp/maidau-gui-build -j"$(nproc)" >/dev/null 2>&1 \
+    || fail "gui build failed"
+  [ -x /tmp/maidau-gui-build/maid-au-gui ] || fail "gui binary missing"
+  QT_QPA_PLATFORM=offscreen /tmp/maidau-gui-build/maid-au-gui --version 2>&1 \
+    | grep -q "maid-au" || fail "gui --version"
+  cat > /tmp/maidau-gui-fake.sh <<'EOF'
+#!/usr/bin/env bash
+echo "=== check done (pacman=1 extra=0 flatpak=0 firmware=0 controllers=0 appimg=0 maid=0 system=0 failed=0) ==="
+EOF
+  chmod +x /tmp/maidau-gui-fake.sh
+  QT_QPA_PLATFORM=offscreen MAID_AU_UPDATE_SCRIPT=/tmp/maidau-gui-fake.sh \
+    timeout 12 /tmp/maidau-gui-build/maid-au-gui --check --quit-after-check \
+    >/dev/null 2>&1 || fail "gui check smoke test"
+  rm -f /tmp/maidau-gui-fake.sh
+  rm -rf /tmp/maidau-gui-build
+  ok "gui builds and runs a check"
+else
+  echo "skip - Qt6 Widgets development files not installed"
+fi
 
 echo "== cleanup =="
 rm -rf /tmp/maidau-t

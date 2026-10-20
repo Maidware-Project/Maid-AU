@@ -1,0 +1,9 @@
+/home/EXAMPLEUSER/Documents/GitHub/Maid AU/gui/build/CMakeFiles/maid-au-gui.dir
+/home/EXAMPLEUSER/Documents/GitHub/Maid AU/gui/build/CMakeFiles/edit_cache.dir
+/home/EXAMPLEUSER/Documents/GitHub/Maid AU/gui/build/CMakeFiles/rebuild_cache.dir
+/home/EXAMPLEUSER/Documents/GitHub/Maid AU/gui/build/CMakeFiles/list_install_components.dir
+/home/EXAMPLEUSER/Documents/GitHub/Maid AU/gui/build/CMakeFiles/install.dir
+/home/EXAMPLEUSER/Documents/GitHub/Maid AU/gui/build/CMakeFiles/install/local.dir
+/home/EXAMPLEUSER/Documents/GitHub/Maid AU/gui/build/CMakeFiles/install/strip.dir
+/home/EXAMPLEUSER/Documents/GitHub/Maid AU/gui/build/CMakeFiles/maid-au-gui_autogen_timestamp_deps.dir
+/home/EXAMPLEUSER/Documents/GitHub/Maid AU/gui/build/CMakeFiles/maid-au-gui_autogen.dir
