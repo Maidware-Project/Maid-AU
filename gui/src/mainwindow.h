@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QByteArray>
 #include <QIcon>
 #include <QMainWindow>
 #include <QProcess>
@@ -34,7 +35,6 @@ protected:
 private slots:
     void cancelCheck();
     void startUpdate();
-    void cancelUpdate();
     void openLog();
     void showAbout();
     void trayActivated(QSystemTrayIcon::ActivationReason reason);
