@@ -9,6 +9,7 @@
 #include <QSystemTrayIcon>
 
 class QAction;
+class QApplication;
 class QLabel;
 class QPlainTextEdit;
 class QProgressBar;
@@ -24,6 +25,7 @@ public:
 
     bool trayAvailable() const;
     void setQuitAfterCheck(bool enabled);
+    void setScreenshotMode(bool enabled);
     void showTrayMessage(const QString &title, const QString &message);
 
 public slots:
@@ -57,6 +59,7 @@ private:
     void setChecking(bool checking);
     void setStatus(const QString &title, const QString &detail, const QString &iconName);
     void appendOutput(const QString &text);
+    QString scriptLabel() const;
     void parseCheckResult(int exitCode, bool normalExit);
     void showError(const QString &title, const QString &message);
 
@@ -69,6 +72,7 @@ private:
     bool m_updating = false;
     bool m_quitAfterCheck = false;
     bool m_closeToTrayTipShown = false;
+    bool m_screenshotMode = false;
 
     QString m_updateScript;
     QString m_askpassPath;
@@ -99,3 +103,5 @@ private:
 
     QSettings m_settings;
 };
+
+void applyMaidwareTheme(QApplication *app);

@@ -29,6 +29,7 @@
 #include <QStandardPaths>
 #include <QStatusBar>
 #include <QStyle>
+#include <QStyleFactory>
 #include <QSysInfo>
 #include <QSystemTrayIcon>
 #include <QTextCursor>
@@ -88,6 +89,17 @@ bool MainWindow::trayAvailable() const
 void MainWindow::setQuitAfterCheck(bool enabled)
 {
     m_quitAfterCheck = enabled;
+}
+
+void MainWindow::setScreenshotMode(bool enabled)
+{
+    m_screenshotMode = enabled;
+    // Screenshots are shared publicly: never ship this machine's hostname,
+    // distro name, or home path in them.
+    if (enabled && m_systemInfo) {
+        m_systemInfo->setText(QStringLiteral("Linux"));
+        m_footer->setText(QStringLiteral("Log: ~/.local/share/update-all.log"));
+    }
 }
 
 void MainWindow::showTrayMessage(const QString &title, const QString &message)
@@ -226,9 +238,11 @@ void MainWindow::buildUi(const QIcon &icon)
 
     m_checkButton = new QPushButton(QIcon::fromTheme(QStringLiteral("view-refresh")),
                                    QStringLiteral("Check for updates"), central);
+    m_checkButton->setObjectName(QStringLiteral("checkButton"));
     m_checkButton->setDefault(true);
     m_updateButton = new QPushButton(QIcon::fromTheme(QStringLiteral("system-software-update")),
                                      QStringLiteral("Update now"), central);
+    m_updateButton->setObjectName(QStringLiteral("primaryButton"));
     m_cancelButton = new QPushButton(QStringLiteral("Cancel"), central);
     m_logButton = new QPushButton(QIcon::fromTheme(QStringLiteral("text-x-generic")),
                                   QStringLiteral("Open log"), central);
@@ -434,6 +448,11 @@ void MainWindow::setChecking(bool checking)
                                       : QStringLiteral("Ready"));
 }
 
+QString MainWindow::scriptLabel() const
+{
+    return m_screenshotMode ? QStringLiteral("~/.local/bin/update-all.sh") : m_updateScript;
+}
+
 void MainWindow::appendOutput(const QString &text)
 {
     if (text.isEmpty())
@@ -461,7 +480,7 @@ void MainWindow::startCheck()
     m_updating = false;
     m_checkBuffer.clear();
     m_output->clear();
-    appendOutput(QStringLiteral("Running: %1 --check\n\n").arg(m_updateScript));
+    appendOutput(QStringLiteral("Running: %1 --check\n\n").arg(scriptLabel()));
     setChecking(true);
     setStatus(QStringLiteral("Checking for updates..."),
               QStringLiteral("Reading native packages, Flatpak, firmware, controllers, AppImages, and the Maid suite. This can take a minute."),
@@ -676,7 +695,7 @@ void MainWindow::startUpdate()
     m_updateCancelled = false;
     m_updateBuffer.clear();
     m_output->clear();
-    appendOutput(QStringLiteral("Running: %1\n\n").arg(m_updateScript));
+    appendOutput(QStringLiteral("Running: %1\n\n").arg(scriptLabel()));
     appendOutput(QStringLiteral("Updates run inside this window. If sudo needs a password, "
                                 "a graphical dialog will appear.\n\n"));
 
@@ -863,4 +882,101 @@ void MainWindow::closeEvent(QCloseEvent *event)
     m_settings.setValue(QStringLiteral("window/geometry"), saveGeometry());
     m_settings.sync();
     event->accept();
+}
+
+
+void applyMaidwareTheme(QApplication *app)
+{
+    // Maidware / Tokyo Night: deep ink, soft slates, one teal accent.
+    // Fusion keeps this identical on Plasma, GNOME and plain X11.
+    if (QStyle *fusion = QStyleFactory::create(QStringLiteral("Fusion")))
+        app->setStyle(fusion);
+
+    QPalette pal;
+    const QColor bg(QStringLiteral("#1a1b26"));
+    const QColor surface(QStringLiteral("#2c2d37"));
+    const QColor base(QStringLiteral("#16161d"));
+    const QColor text(QStringLiteral("#d7dae0"));
+    const QColor muted(QStringLiteral("#9295ac"));
+    const QColor accent(QStringLiteral("#5cb9ae"));
+    const QColor border(QStringLiteral("#454654"));
+
+    pal.setColor(QPalette::Window, bg);
+    pal.setColor(QPalette::WindowText, text);
+    pal.setColor(QPalette::Base, base);
+    pal.setColor(QPalette::AlternateBase, surface);
+    pal.setColor(QPalette::Text, text);
+    pal.setColor(QPalette::Button, surface);
+    pal.setColor(QPalette::ButtonText, text);
+    pal.setColor(QPalette::BrightText, QColor(QStringLiteral("#ff7a85")));
+    pal.setColor(QPalette::Highlight, accent);
+    pal.setColor(QPalette::HighlightedText, bg);
+    pal.setColor(QPalette::Link, accent);
+    pal.setColor(QPalette::LinkVisited, QColor(QStringLiteral("#a7d8d2")));
+    pal.setColor(QPalette::ToolTipBase, surface);
+    pal.setColor(QPalette::ToolTipText, text);
+    pal.setColor(QPalette::PlaceholderText, muted);
+    pal.setColor(QPalette::Disabled, QPalette::Text, QColor(QStringLiteral("#6f7288")));
+    pal.setColor(QPalette::Disabled, QPalette::ButtonText, QColor(QStringLiteral("#6f7288")));
+    pal.setColor(QPalette::Disabled, QPalette::WindowText, QColor(QStringLiteral("#6f7288")));
+    app->setPalette(pal);
+
+    app->setStyleSheet(QStringLiteral(R"QSS(
+QMainWindow, QDialog { background: #1a1b26; }
+QWidget { color: #d7dae0; font-family: "Noto Sans", "Cantarell", sans-serif; font-size: 10pt; }
+QLabel { background: transparent; }
+QLabel:disabled { color: #6f7288; }
+QFrame#statusCard {
+    background: #2c2d37; border: 1px solid #454654; border-radius: 12px;
+}
+QGroupBox {
+    background: #20212b; border: 1px solid #2c2d37; border-radius: 10px;
+    margin-top: 14px; padding-top: 8px; font-weight: 600;
+}
+QGroupBox::title {
+    subcontrol-origin: margin; subcontrol-position: top left;
+    left: 12px; padding: 0 6px; color: #9295ac;
+}
+QPushButton {
+    background: #2c2d37; color: #d7dae0; border: 1px solid #454654;
+    border-radius: 7px; padding: 7px 15px; min-height: 18px;
+}
+QPushButton:hover { background: #353642; border-color: #5b5d70; }
+QPushButton:pressed { background: #252631; }
+QPushButton:default, QPushButton#checkButton { border-color: #5cb9ae; }
+QPushButton#primaryButton {
+    background: #5cb9ae; color: #12131a; border-color: #5cb9ae; font-weight: 700;
+}
+QPushButton#primaryButton:hover { background: #73cbc0; border-color: #73cbc0; }
+QPushButton#primaryButton:pressed { background: #4aa49a; }
+QPushButton:disabled {
+    background: #242530; color: #6f7288; border-color: #2c2d37;
+}
+QPlainTextEdit {
+    background: #16161d; color: #d7dae0; border: 1px solid #2c2d37;
+    border-radius: 8px; padding: 8px;
+    selection-background-color: #5cb9ae; selection-color: #1a1b26;
+    font-family: "DejaVu Sans Mono", "Noto Sans Mono", monospace; font-size: 9.5pt;
+}
+QProgressBar {
+    background: #2c2d37; border: none; border-radius: 3px; min-height: 6px; max-height: 6px;
+}
+QProgressBar::chunk { background: #5cb9ae; border-radius: 3px; }
+QMenuBar { background: #16161d; color: #9295ac; border-bottom: 1px solid #2c2d37; }
+QMenuBar::item { padding: 5px 10px; background: transparent; border-radius: 5px; }
+QMenuBar::item:selected { background: #2c2d37; color: #d7dae0; }
+QMenu { background: #20212b; border: 1px solid #454654; padding: 5px; }
+QMenu::item { padding: 6px 26px 6px 12px; border-radius: 5px; }
+QMenu::item:selected { background: #2c2d37; }
+QMenu::separator { height: 1px; background: #2c2d37; margin: 5px 8px; }
+QStatusBar { background: #16161d; color: #9295ac; border-top: 1px solid #2c2d37; }
+QToolTip { background: #2c2d37; color: #d7dae0; border: 1px solid #454654; padding: 5px 8px; }
+QScrollBar:vertical { background: transparent; width: 10px; margin: 2px; }
+QScrollBar::handle:vertical { background: #454654; border-radius: 4px; min-height: 24px; }
+QScrollBar::handle:vertical:hover { background: #5b5d70; }
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
+QScrollBar:horizontal { background: transparent; height: 10px; margin: 2px; }
+QScrollBar::handle:horizontal { background: #454654; border-radius: 4px; min-width: 24px; }
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }
+)QSS"));
 }
