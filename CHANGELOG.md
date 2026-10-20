@@ -1,5 +1,14 @@
 # changelog
 
+## maid au gui: updates in a window
+
+- new native Qt GUI (Maidware theme) wrapping the same script: dry-run
+  check first, real update after, streaming output, summary panel and a
+  shareable report. ships as the "Maid AU" launcher (`maid-au-gui`); the
+  terminal flow is unchanged.
+- the window honors the same screenshot-friendly flags and never
+  reboots for you.
+
 ## kdeconnectd early-login fix moved to Maid Helper
 
 - the version-specific patch no longer travels in this repo. Maid
