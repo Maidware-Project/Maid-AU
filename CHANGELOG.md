@@ -6,8 +6,9 @@
   Helper's `kdeconnect` doctor installs a user-level platform-fallback
   wrapper that works across KDE Connect versions and survives package
   updates: `maid-helper --only kdeconnect --fix`.
-- the upstream-style source patch is shipped by Maid Helper under its
-  `patches/kdeconnect-26.08.2/` and attached to its releases.
+- no KDE Connect source patch is shipped anywhere now; Maid Helper's
+  wrapper is the only fix, so a future KDE Connect update cannot
+  collide with a stale patch.
 - the installer now reports the detected Plasma, Frameworks, Qt and
   KDE Connect versions, so logs show what the machine actually runs.
 

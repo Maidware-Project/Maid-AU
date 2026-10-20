@@ -197,6 +197,8 @@ done
 
 # the kdeconnect early-login fix lives in Maid Helper's `kdeconnect`
 # doctor (maid-helper --only kdeconnect --fix); it is not shipped here.
+# clean a stale patch copy left by older installs
+if [ "$CHECK" = "0" ]; then rm -rf "$SHAREDIR/maid-au/patches"; fi
 
 if [ "$CHECK" = "1" ]; then say "(check only, nothing changed)"; exit 0; fi
 if [ "$FAIL" = "1" ]; then
