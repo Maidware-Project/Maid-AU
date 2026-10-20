@@ -22,6 +22,9 @@ else
 fi
 
 notify() {
+  # The GUI shows its own notifications; ask it to skip ours so a check
+  # does not pop the same message twice.
+  [ "${UPDATE_NO_NOTIFY:-0}" = "1" ] && return 0
   local summary="$1"; local body="${2:-}"; local urgency="${3:-normal}"; local icon="${4:-software-update-available}"
   if command -v notify-send >/dev/null 2>&1; then
     notify-send -a "System Updater" -u "$urgency" -i "$icon" "$summary" "$body"
@@ -168,6 +171,24 @@ fi
 . "$BACKEND"
 PM_LABEL=$(pm_name)
 
+# Controller helpers are installed next to update-all.sh (user and system
+# installs alike); when running straight from a checkout they live in
+# ../controllers. Fall back to the old ~/.local/bin location for upgrades
+# from older installs.
+ctrl_script() {
+  local name="$1" d
+  for d in "$HOME/.local/bin" "$BACKEND_DIR" "$BACKEND_DIR/../controllers"; do
+    if [ -x "$d/$name" ]; then printf '%s' "$d/$name"; return 0; fi
+  done
+  return 1
+}
+SETUP_CTRL=$(ctrl_script setup-controllers.sh || true)
+CHECK_CTRL=$(ctrl_script check-controllers.sh || true)
+GAMEPAD_HELPER="$HOME/.local/bin/mod-gamepad.sh"
+if [ ! -x "$GAMEPAD_HELPER" ]; then
+  GAMEPAD_HELPER=$(command -v mod-gamepad.sh 2>/dev/null || true)
+fi
+
 # ---- sudo: passwordless preferred, interactive fallback ----
 if sudo -n true >/dev/null 2>&1; then
   SUDO="sudo -n"
@@ -189,10 +210,10 @@ controllers_hook() {
     [ "$1" = "check" ] && echo 0
     return 0
   fi
-  if [ "$PM" = "zypper" ] && [ -x "$HOME/.local/bin/setup-controllers.sh" ]; then
+  if [ "$PM" = "zypper" ] && [ -n "$SETUP_CTRL" ]; then
     if [ "$1" = "update" ]; then
       echo "--- controllers (auto-update) ---"
-      if "$HOME/.local/bin/setup-controllers.sh" --update >"$TMP" 2>&1; then
+      if "$SETUP_CTRL" --update >"$TMP" 2>&1; then
         cat "$TMP"
         if grep -qiE "Installing|Updating|enabling|adding .* to" "$TMP"; then
           UPDATED=1
@@ -205,8 +226,8 @@ controllers_hook() {
         log "controllers: FAILED"
         grep -iE "error|failed|warning" "$TMP" >> "$LOG" || true
       fi
-      if [ -x "$HOME/.local/bin/check-controllers.sh" ]; then
-        if "$HOME/.local/bin/check-controllers.sh" --short >"$TMP" 2>&1; then
+      if [ -n "$CHECK_CTRL" ]; then
+        if "$CHECK_CTRL" --short >"$TMP" 2>&1; then
           log "controllers check: healthy."
         else
           cat "$TMP"
@@ -242,10 +263,10 @@ controllers_hook() {
       echo "$CTRL_N"
     fi
   else
-    if [ -x "$HOME/.local/bin/mod-gamepad.sh" ]; then
+    if [ -n "$GAMEPAD_HELPER" ]; then
       # Maid Helper owns multi-distro gamepads; AU just drives it.
       if [ "$1" = "check" ]; then
-        if "$HOME/.local/bin/mod-gamepad.sh" check >"$TMP" 2>&1; then
+        if "$GAMEPAD_HELPER" check >"$TMP" 2>&1; then
           log "check: controllers: helper reports healthy."
         else
           cat "$TMP"; log "check: controllers: helper reports issues (see above)."
@@ -253,7 +274,7 @@ controllers_hook() {
         echo 0
       else
         echo "--- controllers via Maid Helper ---"
-        if "$HOME/.local/bin/mod-gamepad.sh" fix >"$TMP" 2>&1; then
+        if "$GAMEPAD_HELPER" fix >"$TMP" 2>&1; then
           cat "$TMP"; log "controllers: helper run ok."
         else
           cat "$TMP"; log "controllers: helper run needs attention."
@@ -711,9 +732,15 @@ if [ "${1:-}" = "--check" ]; then
   fi
   SNAP_NOW=$(snap_last_q); [ -n "$SNAP_NOW" ] && log "check: latest snapshot #$SNAP_NOW (rollback available)."
 
-  TOTAL=$((ZYPPER_N + FLAT_N + FW_N + CTRL_N + APPIMG_N))
+  TOTAL=$((ZYPPER_N + EXTRA_N + FLAT_N + FW_N + CTRL_N + APPIMG_N + MAID_N))
   if [ "$CHECK_FAIL" -ne 0 ]; then
     notify "Update check failed" "Check $LOG" critical dialog-error
+    say "=== check done ($PM_LABEL=$ZYPPER_N extra=$EXTRA_N flatpak=$FLAT_N firmware=$FW_N controllers=$CTRL_N appimg=$APPIMG_N maid=$MAID_N system=$SYS_HIT failed=1) ==="
+    echo "Check failed - the package manager could not complete the preview. See $LOG."
+    if [ -t 1 ]; then
+      echo ""; read -n1 -s -r -p "Done - press any key to close..."; echo ""
+    fi
+    exit 1
   elif [ "$TOTAL" -eq 0 ]; then
     notify "System up to date" "$(last_info)" normal software-update-available
     echo "System up to date."
@@ -721,10 +748,10 @@ if [ "${1:-}" = "--check" ]; then
     notify "System update available" "Big update: $PM_LABEL ${ZYPPER_N} (extra ${EXTRA_N}), flatpak ${FLAT_N}, firmware ${FW_N}, controllers ${CTRL_N}. Run System Updater." normal software-update-urgent
     echo "System update available (core/firmware). $PM_LABEL=${ZYPPER_N} extra=${EXTRA_N} flatpak=${FLAT_N} firmware=${FW_N} controllers=${CTRL_N}"
   else
-    notify "App updates available" "$PM_LABEL ${ZYPPER_N} (extra ${EXTRA_N}), flatpak ${FLAT_N}, controllers ${CTRL_N}, appimages ${APPIMG_N}. No reboot needed - run System Updater." normal software-update-available
-    echo "App updates available, no reboot needed. $PM_LABEL=${ZYPPER_N} extra=${EXTRA_N} flatpak=${FLAT_N} controllers=${CTRL_N} appimg=${APPIMG_N}"
+    notify "App updates available" "$PM_LABEL ${ZYPPER_N} (extra ${EXTRA_N}), flatpak ${FLAT_N}, controllers ${CTRL_N}, appimages ${APPIMG_N}, maid ${MAID_N}. No reboot needed - run System Updater." normal software-update-available
+    echo "App updates available, no reboot needed. $PM_LABEL=${ZYPPER_N} extra=${EXTRA_N} flatpak=${FLAT_N} controllers=${CTRL_N} appimg=${APPIMG_N} maid=${MAID_N}"
   fi
-  say "=== check done ($PM_LABEL=$ZYPPER_N extra=$EXTRA_N flatpak=$FLAT_N firmware=$FW_N controllers=$CTRL_N appimg=$APPIMG_N maid=$MAID_N system=$SYS_HIT) ==="
+  say "=== check done ($PM_LABEL=$ZYPPER_N extra=$EXTRA_N flatpak=$FLAT_N firmware=$FW_N controllers=$CTRL_N appimg=$APPIMG_N maid=$MAID_N system=$SYS_HIT failed=0) ==="
   if [ -t 1 ]; then
     echo ""; read -n1 -s -r -p "Done - press any key to close..."; echo ""
   fi
@@ -750,7 +777,7 @@ if [ -f "$LASTFILE" ]; then
 fi
 
 # controller drivers are opt-in: say so BEFORE anything changes
-if [ "$PM" = "zypper" ] && [ -x "$HOME/.local/bin/setup-controllers.sh" ] && [ "${UPDATE_CONTROLLERS:-0}" != "1" ]; then
+if [ "$PM" = "zypper" ] && [ -n "$SETUP_CTRL" ] && [ "${UPDATE_CONTROLLERS:-0}" != "1" ]; then
   say "controllers: skipped (Bazzite KMP stack). to include them: UPDATE_CONTROLLERS=1 update-all.sh"
 fi
 FLATF="$TMP.flatup"; FLATRF="$TMP.flatres"
