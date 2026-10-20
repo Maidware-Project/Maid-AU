@@ -1,14 +1,13 @@
 # changelog
 
-## kdeconnectd fix after the 7.2.11 / Plasma 6.8 upgrade
+## kdeconnectd early-login fix moved to Maid Helper
 
-- kdeconnectd could dump core on the first login after the upgrade to
-  kernel 7.2.11 and KDE Plasma 6.8.0: D-Bus starts the daemon before
-  `XDG_SESSION_TYPE`/`WAYLAND_DISPLAY` reach the systemd user manager, Qt
-  picks xcb while Xwayland is not accepting connections yet, and qFatal
-  aborts it. the patch in `patches/kdeconnect-26.08.2/` makes platform
-  detection fall back wayland -> xcb -> offscreen instead, and probes the
-  compositor socket when `WAYLAND_DISPLAY` is missing.
+- the version-specific patch no longer travels in this repo. Maid
+  Helper's `kdeconnect` doctor installs a user-level platform-fallback
+  wrapper that works across KDE Connect versions and survives package
+  updates: `maid-helper --only kdeconnect --fix`.
+- the upstream-style source patch is shipped by Maid Helper under its
+  `patches/kdeconnect-26.08.2/` and attached to its releases.
 
 ## controller kmps follow the running kernel
 
