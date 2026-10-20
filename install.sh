@@ -165,14 +165,8 @@ for f in "$PKGDIR"/desktop/*.desktop; do
     || { warn "could not install $(basename "$f")"; FAIL=1; }
 done
 
-# the kdeconnect early-login fix (kernel 7.2.11 / Plasma 6.8) travels
-# with the suite: ~/.local/share/maid-au/patches/kdeconnect-26.08.2/
-for f in "$PKGDIR"/patches/kdeconnect-26.08.2/*; do
-  [ -f "$f" ] || continue
-  copy_one "$f" \
-    "$SHAREDIR/maid-au/patches/kdeconnect-26.08.2/$(basename "$f")" \
-    || { warn "could not install $(basename "$f")"; FAIL=1; }
-done
+# the kdeconnect early-login fix lives in Maid Helper's `kdeconnect`
+# doctor (maid-helper --only kdeconnect --fix); it is not shipped here.
 
 if [ "$CHECK" = "1" ]; then say "(check only, nothing changed)"; exit 0; fi
 if [ "$FAIL" = "1" ]; then
