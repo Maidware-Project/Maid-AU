@@ -1,9 +1,18 @@
 #!/usr/bin/env bash
 # Single-command GUI entry for System Updater: sleep-inhibited terminal + update-all.sh
 # Portable terminal choice: first available wins.
-BIN="$HOME/.local/bin/update-all.sh"
-if [ ! -x "$BIN" ]; then
-  echo "update-all.sh not found at $BIN - run install.sh first." >&2
+# Find update-all.sh next to this script first: that covers both the
+# user install (~/.local/bin) and package installs (/usr/bin), where the
+# old hardcoded ~/.local/bin path pointed at nothing.
+SELF=$(command -v -- "$0" 2>/dev/null || printf '%s' "$0")
+SELF_DIR=$(cd "$(dirname "$SELF")" && pwd)
+BIN=""
+for cand in "$SELF_DIR/update-all.sh" "$HOME/.local/bin/update-all.sh" \
+            "$(command -v update-all.sh 2>/dev/null || true)"; do
+  if [ -n "$cand" ] && [ -x "$cand" ]; then BIN="$cand"; break; fi
+done
+if [ -z "$BIN" ]; then
+  echo "update-all.sh not found next to $SELF or on PATH - run install.sh first." >&2
   exit 1
 fi
 # run under systemd-inhibit when available; exec directly otherwise
