@@ -410,21 +410,28 @@ void MainWindow::setStatus(const QString &title, const QString &detail, const QS
     m_statusIcon->setPixmap(icon.pixmap(QSize(kStatusIconSize, kStatusIconSize)));
 }
 
+void MainWindow::setBusy(bool busy)
+{
+    m_checkButton->setEnabled(!busy);
+    m_updateButton->setEnabled(!busy);
+    m_cancelButton->setVisible(busy && !m_updating);
+    m_cancelButton->setEnabled(!m_updating);
+    m_progress->setVisible(busy);
+    if (m_menuCheckAction)
+        m_menuCheckAction->setEnabled(!busy);
+    if (m_menuUpdateAction)
+        m_menuUpdateAction->setEnabled(!busy);
+    if (m_trayCheckAction)
+        m_trayCheckAction->setEnabled(!busy);
+    if (m_trayUpdateAction)
+        m_trayUpdateAction->setEnabled(!busy);
+}
+
 void MainWindow::setChecking(bool checking)
 {
-    m_checkButton->setEnabled(!checking);
-    m_updateButton->setEnabled(!checking);
-    m_cancelButton->setVisible(checking);
-    m_progress->setVisible(checking);
-    if (m_menuCheckAction)
-        m_menuCheckAction->setEnabled(!checking);
-    if (m_menuUpdateAction)
-        m_menuUpdateAction->setEnabled(!checking);
-    if (m_trayCheckAction)
-        m_trayCheckAction->setEnabled(!checking);
-    if (m_trayUpdateAction)
-        m_trayUpdateAction->setEnabled(!checking);
-    statusBar()->showMessage(checking ? QStringLiteral("Checking...") : QStringLiteral("Ready"));
+    setBusy(checking);
+    statusBar()->showMessage(checking ? QStringLiteral("Checking...")
+                                      : QStringLiteral("Ready"));
 }
 
 void MainWindow::appendOutput(const QString &text)
@@ -439,7 +446,7 @@ void MainWindow::appendOutput(const QString &text)
 
 void MainWindow::startCheck()
 {
-    if (m_check)
+    if (m_check || m_update)
         return;
 
     if (m_updateScript.isEmpty()) {
@@ -451,6 +458,7 @@ void MainWindow::startCheck()
     }
 
     m_checkCancelled = false;
+    m_updating = false;
     m_checkBuffer.clear();
     m_output->clear();
     appendOutput(QStringLiteral("Running: %1 --check\n\n").arg(m_updateScript));
@@ -465,6 +473,10 @@ void MainWindow::startCheck()
 
     QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
     env.insert(QStringLiteral("UPDATE_NO_NOTIFY"), QStringLiteral("1"));
+    if (!m_askpassPath.isEmpty()) {
+        env.insert(QStringLiteral("MAID_AU_GUI"), QStringLiteral("1"));
+        env.insert(QStringLiteral("SUDO_ASKPASS"), m_askpassPath);
+    }
     m_check->setProcessEnvironment(env);
 
     connect(m_check, &QProcess::readyReadStandardOutput,
