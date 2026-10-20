@@ -8,6 +8,8 @@
   updates: `maid-helper --only kdeconnect --fix`.
 - the upstream-style source patch is shipped by Maid Helper under its
   `patches/kdeconnect-26.08.2/` and attached to its releases.
+- the installer now reports the detected Plasma, Frameworks, Qt and
+  KDE Connect versions, so logs show what the machine actually runs.
 
 ## controller kmps follow the running kernel
 
