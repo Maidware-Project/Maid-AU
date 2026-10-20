@@ -52,7 +52,7 @@ emit() { # emit <indent> <key> <space-separated values>
   printf 'version: "%s"\n' "$version"
   printf 'section: utils\n'
   printf 'priority: optional\n'
-  printf 'maintainer: "visa <maidwareproject@proton.me>"\n'
+  printf 'maintainer: "Maidware <maidwareproject@proton.me>"\n'
   printf 'description: "%s"\n' "$desc"
   printf 'vendor: "Maidware Project"\n'
   printf 'homepage: "%s"\n' "$homepage"
