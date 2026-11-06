@@ -249,6 +249,10 @@ rm -rf /tmp/maidau-t
 
 echo "== maid suite =="
 fresh_home
+# the fixture commits must not lean on the machine's global git config
+# (a machine that signs commits would poison the fixture repo and its
+# HEAD~1). identity is set locally below; this only detaches the noise.
+export GIT_CONFIG_GLOBAL=/dev/null
 export NOTIFY_LOG=/tmp/maidau-t/notify.log MAID_SUITE=1
 mkdir -p "/tmp/maidau-t/Documents/GitHub"
 git init -q --bare /tmp/maidau-origin.git
