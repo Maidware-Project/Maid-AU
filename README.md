@@ -4,6 +4,9 @@ command-line helper. updates system packages, flatpak apps, and firmware in one 
 ## quick start
 
 ```sh
+# one line, straight from GitHub (then snapshot-aware updates ask before they act):
+bash <(curl -fsSL https://raw.githubusercontent.com/Maidware-Project/Maid-AU/main/install.sh)
+
 bash install.sh            # deps + copy + launcher
 update-all.sh --check      # see what would update, change nothing
 update-all.sh              # real run (snapshots first, sudo as needed)
