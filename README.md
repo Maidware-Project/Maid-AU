@@ -1,4 +1,6 @@
-# Maid AU - one updater for everything on linux
+# Maid AU
+
+> **Note:** Maid AU’s updater workflow is now **embedded and canonical in [Maid Suite](https://github.com/Maidware-Project/Maid-Suite)** (the unified front end, Helper + AU in one place). This standalone repo remains available for now; new users should prefer **Maid Suite** (`maid-suite`). - one updater for everything on linux
 
 command-line helper. updates system packages, flatpak apps, and firmware in one run. tells you what changed, warns when a reboot is needed, and never reboots for you. can preview with <code>--check</code>. it also ships a native GUI: launch Maid AU from the menu and get the same run inside a Maidware-themed window - preview, update, live output and a summary, no terminal needed.
 ## quick start
